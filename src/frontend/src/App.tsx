@@ -38,7 +38,7 @@ type Screen =
 const DEMO_OTP = "123456";
 const OTP_COUNTDOWN = 30;
 
-const LEVELS = [
+const _LEVELS = [
   {
     label: "L1",
     options: [
@@ -1611,6 +1611,81 @@ function NewcomerBonusScreen({
   );
 }
 
+// ─── Buy RP Transaction Data ─────────────────────────────────────────────────
+const ALL_LEVELS = [
+  {
+    label: "L1",
+    options: [
+      { amount: 50, reward: 5 },
+      { amount: 100, reward: 10 },
+    ],
+  },
+  {
+    label: "L2",
+    options: [
+      { amount: 200, reward: 20 },
+      { amount: 300, reward: 30 },
+    ],
+  },
+  {
+    label: "L3",
+    options: [
+      { amount: 500, reward: 50 },
+      { amount: 1000, reward: 100 },
+    ],
+  },
+  {
+    label: "L4",
+    options: [
+      { amount: 2000, reward: 200 },
+      { amount: 3000, reward: 300 },
+    ],
+  },
+  {
+    label: "L5",
+    options: [
+      { amount: 5000, reward: 500 },
+      { amount: 10000, reward: 1000 },
+    ],
+  },
+  {
+    label: "L6",
+    options: [
+      { amount: 15000, reward: 1500 },
+      { amount: 20000, reward: 2000 },
+    ],
+  },
+  {
+    label: "L7",
+    options: [
+      { amount: 25000, reward: 2500 },
+      { amount: 30000, reward: 3000 },
+    ],
+  },
+];
+
+function generateId(): string {
+  return String(Math.floor(1000000000 + Math.random() * 9000000000));
+}
+
+type TxEntry = {
+  id: string;
+  payment: number;
+  award: number;
+  received: boolean;
+};
+
+const LEVEL_TRANSACTIONS: TxEntry[][] = ALL_LEVELS.map((lv) => {
+  const entries: TxEntry[] = [];
+  for (let i = 0; i < 9; i++) {
+    const opt = lv.options[i % 2];
+    const payment = opt.amount;
+    const award = Math.round(payment * 0.03 * 10) / 10;
+    entries.push({ id: generateId(), payment, award, received: false });
+  }
+  return entries;
+});
+
 // ─── Buy RP Screen ────────────────────────────────────────────────────────────
 function BuyRPScreen({
   navigate,
@@ -1623,18 +1698,23 @@ function BuyRPScreen({
   setBuyAmount: React.Dispatch<React.SetStateAction<number>>;
   setRpCoins: React.Dispatch<React.SetStateAction<number>>;
 }) {
-  const [confirmItem, setConfirmItem] = useState<{
-    amount: number;
-    reward: number;
-  } | null>(null);
+  const [activeLevel, setActiveLevel] = useState(0);
+  const [txData, setTxData] = useState<TxEntry[][]>(() =>
+    LEVEL_TRANSACTIONS.map((lvl) => lvl.map((tx) => ({ ...tx }))),
+  );
 
-  const handleConfirm = () => {
-    if (!confirmItem) return;
+  const handleReceive = (txIdx: number) => {
+    const tx = txData[activeLevel][txIdx];
+    if (tx.received) return;
     setBuyQuantity((prev) => prev + 1);
-    setBuyAmount((prev) => prev + confirmItem.amount);
-    setRpCoins((prev) => prev + confirmItem.reward);
-    toast.success(`+${confirmItem.reward} RP added to your balance! 🎉`);
-    setConfirmItem(null);
+    setBuyAmount((prev) => prev + tx.payment);
+    setRpCoins((prev) => prev + tx.award);
+    toast.success(`+${tx.award} RP received! 🎉`);
+    setTxData((prev) => {
+      const next = prev.map((lvl) => lvl.map((t) => ({ ...t })));
+      next[activeLevel][txIdx].received = true;
+      return next;
+    });
   };
 
   return (
@@ -1642,117 +1722,95 @@ function BuyRPScreen({
       initial={{ opacity: 0, x: 40 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -40 }}
-      className="min-h-screen flex flex-col max-w-[430px] mx-auto bg-gray-50"
+      className="min-h-screen flex flex-col max-w-[430px] mx-auto bg-white"
       data-ocid="buy_rp.page"
     >
-      {/* Header */}
-      <header className="px-4 pt-10 pb-4 bg-white shadow-sm flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => navigate("home")}
-          className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center"
-          data-ocid="buy_rp.back.button"
-        >
-          <ArrowLeft size={16} className="text-amber-600" />
-        </button>
-        <div className="flex-1">
-          <h1 className="font-black text-gray-800 text-lg">Buy RP Coins</h1>
-          <p className="text-xs text-gray-400 font-medium">
-            Choose a level and purchase amount to earn RP coins instantly
-          </p>
+      {/* Teal header with level tabs */}
+      <header
+        className="pt-10 pb-0 flex flex-col gap-0"
+        style={{ background: "#0f766e" }}
+      >
+        <div className="flex items-center gap-2 px-4 pb-3">
+          <button
+            type="button"
+            onClick={() => navigate("home")}
+            className="w-8 h-8 rounded-full flex items-center justify-center bg-white/20 hover:bg-white/30 transition-colors"
+            data-ocid="buy_rp.back.button"
+          >
+            <ArrowLeft size={16} className="text-white" />
+          </button>
+          <h1 className="flex-1 font-bold text-white text-base">Buy RP</h1>
+          <button
+            type="button"
+            className="w-8 h-8 rounded-full flex items-center justify-center bg-white/20 hover:bg-white/30 transition-colors"
+            data-ocid="buy_rp.list.button"
+          >
+            <TrendingUp size={16} className="text-white" />
+          </button>
+        </div>
+        {/* Level tabs */}
+        <div className="flex gap-2 px-4 pb-3 overflow-x-auto scrollbar-hide">
+          {ALL_LEVELS.map((lv, i) => (
+            <button
+              key={lv.label}
+              type="button"
+              onClick={() => setActiveLevel(i)}
+              className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
+                activeLevel === i
+                  ? "bg-white text-teal-800"
+                  : "bg-transparent border border-white/50 text-white hover:bg-white/10"
+              }`}
+              data-ocid={`buy_rp.tab.${i + 1}`}
+            >
+              {lv.label}
+            </button>
+          ))}
         </div>
       </header>
 
-      {/* Level cards */}
-      <main className="flex-1 px-4 pb-28 overflow-y-auto space-y-3">
-        {LEVELS.map((level, li) => (
+      {/* Transaction list */}
+      <main className="flex-1 overflow-y-auto pb-24 px-3 pt-3 space-y-2 bg-gray-50">
+        {txData[activeLevel].map((tx, idx) => (
           <div
-            key={level.label}
-            className="bg-white rounded-2xl shadow-sm border border-amber-100 overflow-hidden"
-            data-ocid={`buy_rp.item.${li + 1}`}
+            key={tx.id}
+            className="bg-white rounded-xl shadow-sm px-4 py-3"
+            data-ocid={`buy_rp.item.${idx + 1}`}
           >
-            <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-amber-400 to-yellow-400">
-              <span className="text-white font-black text-sm tracking-wide">
-                {level.label}
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="font-bold text-gray-800 text-sm truncate max-w-[60%]">
+                ID: {tx.id}...
               </span>
-              <div className="h-px flex-1 bg-white/30" />
-              <span className="text-white/80 text-xs font-medium">
-                {level.options[0].reward}–{level.options[1].reward} RP
-              </span>
+              <button
+                type="button"
+                onClick={() => handleReceive(idx)}
+                disabled={tx.received}
+                className={`px-4 py-1 rounded-full border text-xs font-semibold transition-all ${
+                  tx.received
+                    ? "border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed"
+                    : "border-teal-600 text-teal-600 hover:bg-teal-50 active:scale-95"
+                }`}
+                data-ocid={`buy_rp.item.${idx + 1}.button`}
+              >
+                {tx.received ? "Received" : "Receive"}
+              </button>
             </div>
-            <div className="grid grid-cols-2 gap-3 p-3">
-              {level.options.map((opt, oi) => (
-                <button
-                  key={opt.amount}
-                  type="button"
-                  onClick={() => setConfirmItem(opt)}
-                  className="flex flex-col items-center gap-1 rounded-xl border-2 border-amber-200 bg-amber-50 hover:bg-amber-100 active:scale-95 transition-all py-3 px-2"
-                  data-ocid={`buy_rp.item.${li + 1}.button.${oi + 1}`}
-                >
-                  <span className="text-gray-800 font-black text-base">
-                    ₹{opt.amount.toLocaleString("en-IN")}
-                  </span>
-                  <span className="text-xs font-bold text-teal-600 bg-teal-50 rounded-full px-2 py-0.5">
-                    +{opt.reward} RP
-                  </span>
-                </button>
-              ))}
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-500">
+                Payment Amount:{" "}
+                <span className="font-medium text-gray-700">
+                  {tx.payment.toFixed(1)}RP
+                </span>
+              </span>
+              <span className="text-xs text-gray-500">
+                Award:{" "}
+                <span className="font-medium text-gray-700">
+                  {tx.award.toFixed(1)}RP
+                </span>
+              </span>
             </div>
           </div>
         ))}
       </main>
-
-      {/* Confirm Dialog */}
-      {confirmItem && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm"
-          data-ocid="buy_rp.dialog"
-        >
-          <motion.div
-            initial={{ y: 80, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 80, opacity: 0 }}
-            className="bg-white rounded-t-3xl w-full max-w-[430px] p-6 pb-10"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5" />
-            <div className="text-center mb-6">
-              <div className="text-5xl mb-3">🪙</div>
-              <h3 className="font-black text-gray-800 text-xl mb-1">
-                Confirm Purchase
-              </h3>
-              <p className="text-gray-500 text-sm">
-                Buy{" "}
-                <span className="font-bold text-gray-700">
-                  ₹{confirmItem.amount.toLocaleString("en-IN")}
-                </span>{" "}
-                to earn
-              </p>
-              <p className="text-2xl font-black text-amber-500 mt-1">
-                +{confirmItem.reward} RP
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setConfirmItem(null)}
-                className="flex-1 py-3 rounded-xl border-2 border-gray-200 font-bold text-gray-600 hover:bg-gray-50 transition-colors"
-                data-ocid="buy_rp.cancel.button"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirm}
-                className="flex-1 py-3 rounded-xl font-black text-white bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-500 hover:to-yellow-500 transition-all shadow-md"
-                data-ocid="buy_rp.confirm.button"
-              >
-                Confirm Buy
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
 
       <BottomNav active="buy-rp" onNavigate={navigate} />
     </motion.div>

@@ -1,31 +1,25 @@
 # WynPay
 
 ## Current State
-New project. Only scaffold files exist. A wynpay logo has been generated at /assets/generated/wynpay-logo-transparent.dim_512x512.png.
+Buy RP screen shows level cards (L1-L6) with buy amount buttons. Users tap an amount, confirm, and receive RP.
 
 ## Requested Changes (Diff)
 
 ### Add
-- User registration (signup) with phone number + OTP verification
-- User login with phone number + OTP verification
-- Forgot password / reset password flow with OTP verification
-- OTP generation and validation on the backend (6-digit code, expires after 5 minutes)
-- User profile storage (name, phone, hashed password)
-- Session/auth token management
-- A welcome/dashboard screen shown after successful login
+- Teal header with L1-L7 pill tabs; active level is white pill
+- Search icon in top-right
+- Scrollable transaction list per level: ID, Receive button, Payment Amount, Award (~3% of payment)
 
 ### Modify
-N/A
+- BuyRPScreen: Replace level-card grid with transaction list UI
+- Add L7 level
+- Header: solid teal, white pills for tabs
 
 ### Remove
-N/A
+- Old buy button grid and confirm dialog
 
 ## Implementation Plan
-1. Backend: user store (phone -> profile), OTP store (phone -> {code, expiry}), generateOTP, verifyOTP, registerUser, loginUser, resetPassword endpoints
-2. Frontend screens:
-   - Splash / landing with wynpay logo
-   - Login screen: phone number input -> OTP entry
-   - Signup screen: name + phone input -> OTP entry -> password set
-   - Forgot password screen: phone input -> OTP entry -> new password
-   - Dashboard/home screen after successful auth
-3. OTP is simulated (displayed as a toast/alert since SMS is not available on the platform)
+1. Add L7 to LEVELS
+2. Rewrite BuyRPScreen with teal header + level tab row + scrollable card list
+3. Mock 8-10 transactions per level with random IDs and amounts
+4. Receive button updates rpCoins, buyQuantity, buyAmount
