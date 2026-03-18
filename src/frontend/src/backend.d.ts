@@ -7,6 +7,3 @@ export interface None {
     __kind__: "None";
 }
 export type Option<T> = Some<T> | None;
-export interface backendInterface {
-    _initializeAccessControlWithSecret(secret: string): Promise<void>;
-}
