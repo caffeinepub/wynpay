@@ -5,12 +5,29 @@ import { Progress } from "@/components/ui/progress";
 import { Toaster } from "@/components/ui/sonner";
 import {
   ArrowLeft,
+  CheckCircle,
+  ChevronRight,
+  Copy,
   Eye,
   EyeOff,
+  Gift,
+  Grid2x2,
+  Headphones,
+  HelpCircle,
   Home,
+  Loader2,
+  Lock,
+  LogOut,
+  Plus,
+  Send,
   ShoppingCart,
+  Smartphone,
+  Trash2,
   TrendingUp,
   User,
+  Users,
+  Wallet,
+  X,
   Zap,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -37,6 +54,33 @@ type Screen =
 
 const DEMO_OTP = "123456";
 const OTP_COUNTDOWN = 30;
+
+// ─── UPI Wallet Types ────────────────────────────────────────────────────────
+type UpiWalletType = "PhonePe" | "Paytm" | "MobiKwik" | "FreeCharge";
+interface UpiWallet {
+  id: string;
+  name: UpiWalletType;
+  upiId: string;
+}
+interface SellTransaction {
+  id: string;
+  date: string;
+  walletName: string;
+  amount: number;
+}
+
+const WALLET_COLORS: Record<UpiWalletType, string> = {
+  PhonePe: "#5f259f",
+  Paytm: "#00b9f1",
+  MobiKwik: "#e40046",
+  FreeCharge: "#f26522",
+};
+const WALLET_EMOJIS: Record<UpiWalletType, string> = {
+  PhonePe: "📱",
+  Paytm: "💳",
+  MobiKwik: "📲",
+  FreeCharge: "⚡",
+};
 
 const _LEVELS = [
   {
@@ -311,9 +355,9 @@ function AuthCard({
         )}
         <div className="mb-8">
           <img
-            src="/assets/generated/wynpay-logo-transparent.dim_512x512.png"
+            src="/assets/generated/wynpay-logo-transparent.dim_400x400.png"
             alt="WynPay"
-            className="w-16 h-16 object-contain mb-4"
+            className="w-48 h-48 object-contain mb-4"
           />
           <h2 className="text-3xl font-bold text-foreground">{title}</h2>
           {subtitle && <p className="text-muted-foreground mt-2">{subtitle}</p>}
@@ -344,9 +388,9 @@ function SplashScreen({ navigate }: { navigate: (s: Screen) => void }) {
           transition={{ duration: 0.6, ease: "backOut" }}
         >
           <img
-            src="/assets/generated/wynpay-logo-transparent.dim_512x512.png"
+            src="/assets/generated/wynpay-logo-transparent.dim_400x400.png"
             alt="WynPay"
-            className="w-40 h-40 object-contain"
+            className="w-64 h-64 object-contain"
           />
         </motion.div>
         <motion.div
@@ -1193,9 +1237,9 @@ function HomeScreen({
       <header className="px-4 pt-10 pb-3 flex items-center justify-between bg-white shadow-sm">
         <div className="flex items-center gap-2">
           <img
-            src="/assets/generated/wynpay-logo-transparent.dim_512x512.png"
+            src="/assets/generated/wynpay-logo-transparent.dim_400x400.png"
             alt="WynPay"
-            className="w-8 h-8 object-contain"
+            className="w-20 h-20 object-contain"
           />
           <span className="text-lg font-bold gold-text">wynpay</span>
         </div>
@@ -1655,13 +1699,6 @@ const ALL_LEVELS = [
       { amount: 20000, reward: 2000 },
     ],
   },
-  {
-    label: "L7",
-    options: [
-      { amount: 25000, reward: 2500 },
-      { amount: 30000, reward: 3000 },
-    ],
-  },
 ];
 
 function generateId(): string {
@@ -1679,12 +1716,224 @@ const LEVEL_TRANSACTIONS: TxEntry[][] = ALL_LEVELS.map((lv) => {
   const entries: TxEntry[] = [];
   for (let i = 0; i < 9; i++) {
     const opt = lv.options[i % 2];
-    const payment = opt.amount;
-    const award = Math.round(payment * 0.03 * 10) / 10;
-    entries.push({ id: generateId(), payment, award, received: false });
+    entries.push({
+      id: generateId(),
+      payment: opt.amount,
+      award: opt.reward,
+      received: false,
+    });
   }
   return entries;
 });
+
+// ─── UPI Payment Modal ────────────────────────────────────────────────────────
+const UPI_IDS = ["Chanchal.68@ybl", "Chanchal.68@ibl", "Chanchal.68@axl"];
+
+function UpiPaymentModal({
+  payment,
+  onPay,
+  onCancel,
+}: {
+  payment: number;
+  onPay: () => void;
+  onCancel: () => void;
+}) {
+  const [step, setStep] = useState<"choose" | "processing" | "success">(
+    "choose",
+  );
+  const [timeLeft, setTimeLeft] = useState(120);
+  const proceededRef = useRef(false);
+  const onPayRef = useRef(onPay);
+  onPayRef.current = onPay;
+
+  const handleProceed = useCallback(async () => {
+    if (proceededRef.current) return;
+    proceededRef.current = true;
+    setStep("processing");
+    await new Promise((r) => setTimeout(r, 1500));
+    setStep("success");
+    await new Promise((r) => setTimeout(r, 1000));
+    onPayRef.current();
+  }, []);
+
+  useEffect(() => {
+    if (step !== "choose") return;
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          handleProceed();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [step, handleProceed]);
+
+  const handleCopyUpi = (upi: string) => {
+    navigator.clipboard.writeText(upi).catch(() => {});
+    toast.success("Copied!");
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center"
+      onClick={(e) => {
+        if (e.target === e.currentTarget && step === "choose") onCancel();
+      }}
+    >
+      <motion.div
+        initial={{ y: 300, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 300, opacity: 0 }}
+        transition={{ type: "spring", damping: 25, stiffness: 280 }}
+        className="w-full max-w-sm bg-white rounded-t-3xl overflow-hidden shadow-2xl"
+      >
+        {/* PhonePe Header */}
+        <div
+          className="flex items-center gap-3 px-5 py-4"
+          style={{ background: "#5f259f" }}
+        >
+          <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center">
+            <Smartphone size={20} className="text-white" />
+          </div>
+          <div>
+            <p className="text-white font-bold text-base leading-none">
+              PhonePe
+            </p>
+            <p className="text-white/70 text-xs">UPI Payment</p>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="px-5 pt-5 pb-6">
+          {step === "choose" && (
+            <>
+              {/* Amount */}
+              <div className="text-center mb-5">
+                <p className="text-gray-500 text-sm mb-1">Pay Amount</p>
+                <p className="text-3xl font-extrabold text-gray-900">
+                  Rs. {payment}
+                </p>
+              </div>
+
+              {/* UPI IDs */}
+              <div className="mb-5">
+                <p className="text-gray-500 text-xs font-semibold uppercase tracking-wide mb-2">
+                  Send money to
+                </p>
+                <div className="space-y-2">
+                  {UPI_IDS.map((upi, i) => (
+                    <div
+                      key={upi}
+                      className="flex items-center gap-3 bg-purple-50 rounded-xl px-3 py-2.5"
+                    >
+                      <div
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                        style={{ background: "#5f259f" }}
+                      >
+                        {i + 1}
+                      </div>
+                      <span className="flex-1 text-sm font-medium text-gray-800 truncate">
+                        {upi}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyUpi(upi)}
+                        className="text-purple-600 hover:text-purple-800 transition-colors flex-shrink-0"
+                        title="Copy UPI ID"
+                      >
+                        <Copy size={15} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Countdown Timer */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs text-gray-500 font-medium">
+                    Auto-checking payment
+                  </span>
+                  <span
+                    className="text-sm font-bold"
+                    style={{ color: "#5f259f" }}
+                  >
+                    {String(Math.floor(timeLeft / 60)).padStart(1, "0")}:
+                    {String(timeLeft % 60).padStart(2, "0")}
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-1000"
+                    style={{
+                      background: "#5f259f",
+                      width: `${(timeLeft / 120) * 100}%`,
+                    }}
+                  />
+                </div>
+                <p className="text-xs text-gray-400 text-center mt-2">
+                  Payment verification in progress...
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={onCancel}
+                className="w-full mt-3 py-2 text-gray-400 text-sm font-medium"
+                data-ocid="upi_payment.cancel_button"
+              >
+                Cancel
+              </button>
+            </>
+          )}
+
+          {step === "processing" && (
+            <div
+              className="flex flex-col items-center py-10 gap-4"
+              data-ocid="upi_payment.loading_state"
+            >
+              <Loader2
+                size={48}
+                className="animate-spin"
+                style={{ color: "#5f259f" }}
+              />
+              <p className="text-gray-700 font-semibold text-base">
+                Processing payment...
+              </p>
+              <p className="text-gray-400 text-sm">Please wait</p>
+            </div>
+          )}
+
+          {step === "success" && (
+            <div
+              className="flex flex-col items-center py-10 gap-3"
+              data-ocid="upi_payment.success_state"
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              >
+                <CheckCircle size={56} className="text-green-500" />
+              </motion.div>
+              <p className="text-gray-800 font-bold text-xl">
+                Payment Successful!
+              </p>
+              <p className="text-gray-500 text-sm text-center">
+                Your RP will be credited shortly
+              </p>
+            </div>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
 
 // ─── Buy RP Screen ────────────────────────────────────────────────────────────
 function BuyRPScreen({
@@ -1699,6 +1948,11 @@ function BuyRPScreen({
   setRpCoins: React.Dispatch<React.SetStateAction<number>>;
 }) {
   const [activeLevel, setActiveLevel] = useState(0);
+  const [payingTx, setPayingTx] = useState<{
+    idx: number;
+    payment: number;
+    award: number;
+  } | null>(null);
   const [txData, setTxData] = useState<TxEntry[][]>(() =>
     LEVEL_TRANSACTIONS.map((lvl) => lvl.map((tx) => ({ ...tx }))),
   );
@@ -1722,7 +1976,7 @@ function BuyRPScreen({
       initial={{ opacity: 0, x: 40 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -40 }}
-      className="min-h-screen flex flex-col max-w-[430px] mx-auto bg-white"
+      className="min-h-screen flex flex-col max-w-[430px] mx-auto bg-slate-900"
       data-ocid="buy_rp.page"
     >
       {/* Teal header with level tabs */}
@@ -1769,20 +2023,23 @@ function BuyRPScreen({
       </header>
 
       {/* Transaction list */}
-      <main className="flex-1 overflow-y-auto pb-24 px-3 pt-3 space-y-2 bg-gray-50">
+      <main className="flex-1 overflow-y-auto pb-24 px-3 pt-3 space-y-2 bg-slate-900">
         {txData[activeLevel].map((tx, idx) => (
           <div
             key={tx.id}
-            className="bg-white rounded-xl shadow-sm px-4 py-3"
+            className="bg-slate-800 rounded-xl shadow-sm px-4 py-3 border border-slate-700"
             data-ocid={`buy_rp.item.${idx + 1}`}
           >
             <div className="flex items-center justify-between mb-1.5">
-              <span className="font-bold text-gray-800 text-sm truncate max-w-[60%]">
+              <span className="font-bold text-white text-sm truncate max-w-[60%]">
                 ID: {tx.id}...
               </span>
               <button
                 type="button"
-                onClick={() => handleReceive(idx)}
+                onClick={() =>
+                  !tx.received &&
+                  setPayingTx({ idx, payment: tx.payment, award: tx.award })
+                }
                 disabled={tx.received}
                 className={`px-4 py-1 rounded-full border text-xs font-semibold transition-all ${
                   tx.received
@@ -1795,16 +2052,16 @@ function BuyRPScreen({
               </button>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-slate-400">
                 Payment Amount:{" "}
-                <span className="font-medium text-gray-700">
-                  {tx.payment.toFixed(1)}RP
+                <span className="font-medium text-teal-300">
+                  Rs. {tx.payment}
                 </span>
               </span>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-slate-400">
                 Award:{" "}
-                <span className="font-medium text-gray-700">
-                  {tx.award.toFixed(1)}RP
+                <span className="font-medium text-amber-400">
+                  Rs. {tx.award}
                 </span>
               </span>
             </div>
@@ -1812,50 +2069,607 @@ function BuyRPScreen({
         ))}
       </main>
 
+      <AnimatePresence>
+        {payingTx !== null && (
+          <UpiPaymentModal
+            payment={payingTx.payment}
+            onPay={() => {
+              handleReceive(payingTx.idx);
+              setPayingTx(null);
+            }}
+            onCancel={() => setPayingTx(null)}
+          />
+        )}
+      </AnimatePresence>
       <BottomNav active="buy-rp" onNavigate={navigate} />
     </motion.div>
   );
 }
 
 // ─── Placeholder Screen ───────────────────────────────────────────────────────
-function PlaceholderScreen({
-  title,
-  emoji,
-  activeNav,
+// ─── Sell RP Screen ──────────────────────────────────────────────────────────
+function SellRPScreen({
   navigate,
+  upiWallets,
+  setUpiWallets,
+  sellTransactions,
 }: {
-  title: string;
-  emoji: string;
-  activeNav: Screen;
   navigate: (s: Screen) => void;
+  upiWallets: UpiWallet[];
+  setUpiWallets: React.Dispatch<React.SetStateAction<UpiWallet[]>>;
+  sellTransactions: SellTransaction[];
 }) {
+  const [showAddWallet, setShowAddWallet] = useState(false);
+  const [showRecords, setShowRecords] = useState(false);
+  const [selectedWalletType, setSelectedWalletType] =
+    useState<UpiWalletType | null>(null);
+  const [upiInput, setUpiInput] = useState("");
+  const [addError, setAddError] = useState("");
+
+  const todayTotal = sellTransactions
+    .filter((tx) => {
+      const today = new Date().toDateString();
+      return new Date(tx.date).toDateString() === today;
+    })
+    .reduce((sum, tx) => sum + tx.amount, 0);
+
+  const handleAddWallet = () => {
+    if (!selectedWalletType) {
+      setAddError("Please select a wallet type.");
+      return;
+    }
+    if (!upiInput.trim()) {
+      setAddError("Please enter your UPI ID.");
+      return;
+    }
+    const newWallet: UpiWallet = {
+      id: Date.now().toString(),
+      name: selectedWalletType,
+      upiId: upiInput.trim(),
+    };
+    setUpiWallets((prev) => [...prev, newWallet]);
+    setShowAddWallet(false);
+    setSelectedWalletType(null);
+    setUpiInput("");
+    setAddError("");
+    toast.success(`${selectedWalletType} wallet added!`);
+  };
+
+  const handleDeleteWallet = (id: string) => {
+    setUpiWallets((prev) => prev.filter((w) => w.id !== id));
+    toast.success("Wallet removed.");
+  };
+
+  const walletTypes: UpiWalletType[] = [
+    "PhonePe",
+    "Paytm",
+    "MobiKwik",
+    "FreeCharge",
+  ];
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="min-h-screen flex flex-col max-w-[430px] mx-auto bg-gray-50"
     >
+      {/* Header */}
       <header className="px-4 pt-10 pb-3 bg-white shadow-sm flex items-center gap-3">
         <button
           type="button"
+          data-ocid="sell_rp.back.button"
           onClick={() => navigate("home")}
           className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
         >
           <ArrowLeft size={16} className="text-gray-600" />
         </button>
-        <span className="font-black text-gray-800">{title}</span>
+        <span className="font-black text-gray-800 text-lg">Sell RP</span>
       </header>
-      <main className="flex-1 flex flex-col items-center justify-center gap-4 pb-24">
-        <div className="text-7xl">{emoji}</div>
-        <h2 className="text-2xl font-black text-gray-700">Coming Soon</h2>
-        <p className="text-gray-400 text-center px-8">
-          This feature is being built. Stay tuned for updates!
-        </p>
-        <div className="mt-2 px-5 py-2 rounded-full text-xs font-bold text-white bg-gradient-to-r from-amber-400 to-yellow-500">
-          🚀 Launching soon
+
+      <main className="flex-1 overflow-y-auto px-4 py-4 pb-28 space-y-5">
+        {/* Today's Overview Card */}
+        <div
+          className="rounded-2xl p-4 shadow-sm"
+          style={{
+            background: "linear-gradient(135deg, #e8f4fd 0%, #dbeeff 100%)",
+          }}
+        >
+          <p className="text-center text-sm font-bold text-gray-600 mb-3">
+            Today's Overview
+          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-gray-500">Amount of receipt:</p>
+              <p className="text-3xl font-black text-gray-800">
+                ₹{todayTotal.toFixed(2)}
+              </p>
+            </div>
+            <button
+              type="button"
+              data-ocid="sell_rp.record.button"
+              onClick={() => setShowRecords(true)}
+              className="px-4 py-2 rounded-xl border-2 text-sm font-bold"
+              style={{ borderColor: "#008080", color: "#008080" }}
+            >
+              Record
+            </button>
+          </div>
         </div>
+
+        {/* Wallet Information */}
+        <div>
+          <h3 className="text-sm font-black text-gray-700 mb-3 px-1">
+            Wallet Information
+          </h3>
+
+          {upiWallets.length === 0 ? (
+            <div
+              className="bg-white rounded-2xl shadow-sm flex flex-col items-center justify-center py-10 gap-2"
+              data-ocid="sell_rp.wallets.empty_state"
+            >
+              <div className="text-5xl">📦</div>
+              <p className="text-sm text-gray-400">
+                There is currently no data
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3" data-ocid="sell_rp.wallets.list">
+              {upiWallets.map((wallet, idx) => (
+                <div
+                  key={wallet.id}
+                  data-ocid={`sell_rp.wallet.item.${idx + 1}`}
+                  className="bg-white rounded-2xl shadow-sm px-4 py-3 flex items-center gap-3"
+                >
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-lg font-bold flex-shrink-0"
+                    style={{ backgroundColor: WALLET_COLORS[wallet.name] }}
+                  >
+                    {WALLET_EMOJIS[wallet.name]}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-gray-800 text-sm">
+                      {wallet.name}
+                    </p>
+                    <p className="text-xs text-gray-400 truncate">
+                      {wallet.upiId}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    data-ocid={`sell_rp.wallet.delete_button.${idx + 1}`}
+                    onClick={() => handleDeleteWallet(wallet.id)}
+                    className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0"
+                  >
+                    <Trash2 size={14} className="text-red-400" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Add Wallet Button */}
+        <button
+          type="button"
+          data-ocid="sell_rp.add_wallet.button"
+          onClick={() => setShowAddWallet(true)}
+          className="w-full bg-white rounded-2xl shadow-sm px-4 py-4 flex items-center gap-3 hover:bg-gray-50 transition-colors"
+        >
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: "#008080" }}
+          >
+            <Plus size={20} className="text-white" />
+          </div>
+          <span className="font-bold text-gray-700">Add Wallet</span>
+        </button>
       </main>
-      <BottomNav active={activeNav} onNavigate={navigate} />
+
+      <BottomNav active="sell-rp" onNavigate={navigate} />
+
+      {/* Add Wallet Modal */}
+      {showAddWallet && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          data-ocid="sell_rp.add_wallet.modal"
+        >
+          <button
+            type="button"
+            aria-label="Close"
+            className="absolute inset-0 bg-black/50"
+            onClick={() => {
+              setShowAddWallet(false);
+              setAddError("");
+            }}
+          />
+          <motion.div
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="relative z-10 bg-white w-full max-w-[430px] rounded-t-3xl p-5 pb-8"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-black text-gray-800">
+                Add UPI Wallet
+              </h3>
+              <button
+                type="button"
+                data-ocid="sell_rp.add_wallet.close_button"
+                onClick={() => {
+                  setShowAddWallet(false);
+                  setAddError("");
+                }}
+                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
+              >
+                <X size={16} className="text-gray-600" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {walletTypes.map((wt) => (
+                <button
+                  key={wt}
+                  type="button"
+                  data-ocid={`sell_rp.wallet_type.${wt.toLowerCase()}.button`}
+                  onClick={() => setSelectedWalletType(wt)}
+                  className={`flex items-center gap-2 px-3 py-3 rounded-xl border-2 transition-all ${
+                    selectedWalletType === wt
+                      ? "border-teal-500 bg-teal-50"
+                      : "border-gray-200 bg-white"
+                  }`}
+                >
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0"
+                    style={{ backgroundColor: WALLET_COLORS[wt] }}
+                  >
+                    {WALLET_EMOJIS[wt]}
+                  </div>
+                  <span className="text-sm font-bold text-gray-700">{wt}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="mb-1">
+              <label
+                htmlFor="upi-id-input"
+                className="text-xs font-bold text-gray-600 mb-1 block"
+              >
+                UPI ID
+              </label>
+              <input
+                type="text"
+                id="upi-id-input"
+                data-ocid="sell_rp.upi_id.input"
+                placeholder={
+                  selectedWalletType
+                    ? `yourname@${selectedWalletType.toLowerCase()}`
+                    : "yourname@upi"
+                }
+                value={upiInput}
+                onChange={(e) => {
+                  setUpiInput(e.target.value);
+                  setAddError("");
+                }}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-teal-400 transition-colors"
+              />
+            </div>
+
+            {addError && (
+              <p className="text-xs text-red-500 mb-3">{addError}</p>
+            )}
+
+            <button
+              type="button"
+              data-ocid="sell_rp.add_wallet.submit_button"
+              onClick={handleAddWallet}
+              className="w-full py-3 rounded-xl font-black text-white mt-4"
+              style={{ backgroundColor: "#008080" }}
+            >
+              Add Wallet
+            </button>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Records Modal */}
+      {showRecords && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          data-ocid="sell_rp.records.modal"
+        >
+          <button
+            type="button"
+            aria-label="Close"
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowRecords(false)}
+          />
+          <motion.div
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="relative z-10 bg-white w-full max-w-[430px] rounded-t-3xl p-5 pb-8 max-h-[80vh] flex flex-col"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-black text-gray-800">
+                Transaction Records
+              </h3>
+              <button
+                type="button"
+                data-ocid="sell_rp.records.close_button"
+                onClick={() => setShowRecords(false)}
+                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
+              >
+                <X size={16} className="text-gray-600" />
+              </button>
+            </div>
+
+            <div className="overflow-y-auto flex-1">
+              {sellTransactions.length === 0 ? (
+                <div
+                  className="flex flex-col items-center justify-center py-12 gap-2"
+                  data-ocid="sell_rp.records.empty_state"
+                >
+                  <div className="text-5xl">📋</div>
+                  <p className="text-sm text-gray-400">No transactions yet</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {sellTransactions.map((tx, idx) => (
+                    <div
+                      key={tx.id}
+                      data-ocid={`sell_rp.transaction.item.${idx + 1}`}
+                      className="flex items-center gap-3 p-3 rounded-xl bg-gray-50"
+                    >
+                      <div className="w-9 h-9 rounded-xl bg-teal-100 flex items-center justify-center flex-shrink-0">
+                        <Wallet size={16} className="text-teal-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-gray-700">
+                          {tx.walletName}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {new Date(tx.date).toLocaleString()}
+                        </p>
+                      </div>
+                      <p className="font-black text-teal-600 text-sm">
+                        +₹{tx.amount.toFixed(2)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
+// ─── Mine / Profile Screen ────────────────────────────────────────────────────
+function MineScreen({
+  buyAmount,
+  rpCoins,
+  userPhone,
+  navigate,
+  onLogout,
+}: {
+  buyAmount: number;
+  rpCoins: number;
+  userPhone: string;
+  navigate: (s: Screen) => void;
+  onLogout: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  const inviteCode = `WYN${userPhone ? userPhone.slice(-4) : "0000"}`;
+  const currentBalance = buyAmount + rpCoins;
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(inviteCode).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    toast.success("Invite code copied!");
+  };
+
+  const menuItems = [
+    {
+      icon: <Gift size={18} className="text-amber-500" />,
+      label: "Newbie Rewards",
+    },
+    {
+      icon: <Grid2x2 size={18} className="text-teal-600" />,
+      label: "Bind Payment App",
+    },
+    {
+      icon: <HelpCircle size={18} className="text-blue-500" />,
+      label: "Common Problem",
+    },
+    {
+      icon: <Headphones size={18} className="text-purple-500" />,
+      label: "Online Service",
+    },
+    {
+      icon: <Lock size={18} className="text-gray-500" />,
+      label: "Account Security",
+    },
+    {
+      icon: <Send size={18} className="text-teal-500" />,
+      label: "Official Channel",
+    },
+    {
+      icon: <Users size={18} className="text-amber-600" />,
+      label: "Superior Relationship",
+    },
+  ];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="min-h-screen flex flex-col max-w-[430px] mx-auto bg-gray-100"
+      data-ocid="mine.page"
+    >
+      {/* Header */}
+      <header className="px-4 pt-10 pb-5 bg-gradient-to-br from-gray-900 via-gray-800 to-teal-900">
+        <div className="flex items-center gap-4">
+          {/* Avatar */}
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-400 to-teal-500 flex items-center justify-center border-2 border-amber-400/50 shadow-lg">
+            <User size={32} className="text-white" />
+          </div>
+          <div className="flex-1">
+            <p className="text-xs text-gray-400 font-medium tracking-wide mb-0.5">
+              MOBILE
+            </p>
+            <p className="text-white font-bold text-base">
+              +91{" "}
+              {userPhone
+                ? userPhone.replace(/^(\d{5})(\d{5})$/, "$1 $2")
+                : "XXXXXXXXXX"}
+            </p>
+            {/* Invite Code */}
+            <div className="mt-2 flex items-center gap-2 bg-gray-800/60 rounded-lg px-3 py-1.5 w-fit border border-amber-400/20">
+              <span className="text-xs text-gray-400">Invite:</span>
+              <span className="text-amber-400 font-bold text-sm tracking-widest">
+                {inviteCode}
+              </span>
+              <button
+                type="button"
+                onClick={handleCopy}
+                data-ocid="mine.copy.button"
+                className="ml-1 text-teal-400 hover:text-teal-300 transition-colors"
+              >
+                {copied ? (
+                  <span className="text-[10px] text-green-400 font-bold">
+                    ✓
+                  </span>
+                ) : (
+                  <Copy size={13} />
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex-1 overflow-y-auto pb-24 space-y-3 pt-3 px-3">
+        {/* Current Balance Card */}
+        <div
+          className="bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between"
+          data-ocid="mine.balance.card"
+        >
+          <div>
+            <p className="text-xs text-gray-500 font-medium mb-1">
+              Current Balance
+            </p>
+            <div className="flex items-baseline gap-1">
+              <span className="text-2xl font-black text-gray-800">
+                ₹{currentBalance.toFixed(2)}
+              </span>
+            </div>
+            <div className="flex gap-3 mt-1.5">
+              <span className="text-[11px] text-gray-400">
+                Buy:{" "}
+                <span className="text-amber-600 font-semibold">
+                  ₹{buyAmount.toFixed(0)}
+                </span>
+              </span>
+              <span className="text-[11px] text-gray-400">
+                Rewards:{" "}
+                <span className="text-teal-600 font-semibold">
+                  ₹{rpCoins.toFixed(0)}
+                </span>
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center shadow-md">
+              <Wallet size={18} className="text-white" />
+            </div>
+            <ChevronRight size={18} className="text-gray-400" />
+          </div>
+        </div>
+
+        {/* My Team Card */}
+        <div
+          className="rounded-2xl overflow-hidden shadow-sm"
+          data-ocid="mine.team.card"
+        >
+          <div className="bg-gradient-to-r from-teal-600 to-teal-700 p-4 flex items-center justify-between">
+            <div>
+              <p className="text-white font-black text-lg leading-tight">
+                My team
+              </p>
+              <p className="text-teal-200 text-xs mt-0.5">
+                3-LEVEL rebate mechanism
+              </p>
+              <button
+                type="button"
+                data-ocid="mine.team.button"
+                className="mt-2 text-amber-300 text-xs font-bold flex items-center gap-0.5 hover:text-amber-200 transition-colors"
+              >
+                View earnings <ChevronRight size={13} />
+              </button>
+            </div>
+            <div className="w-16 h-16 rounded-full bg-teal-500/30 flex items-center justify-center">
+              <Users size={30} className="text-amber-300" />
+            </div>
+          </div>
+        </div>
+
+        {/* Menu List Card */}
+        <div
+          className="bg-white rounded-2xl shadow-sm overflow-hidden"
+          data-ocid="mine.menu.card"
+        >
+          {menuItems.map((item, idx) => (
+            <div key={item.label}>
+              <button
+                type="button"
+                data-ocid={`mine.menu.item.${idx + 1}`}
+                className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition-colors"
+              >
+                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                  {item.icon}
+                </div>
+                <span className="flex-1 text-left text-sm font-medium text-gray-700">
+                  {item.label}
+                </span>
+                <ChevronRight size={16} className="text-gray-400" />
+              </button>
+              {idx < menuItems.length - 1 && (
+                <div className="ml-14 border-b border-gray-100" />
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Logout Button */}
+        <button
+          type="button"
+          onClick={onLogout}
+          data-ocid="mine.logout.button"
+          className="w-full py-3.5 rounded-2xl border-2 border-red-400 text-red-500 font-bold text-sm hover:bg-red-50 transition-colors flex items-center justify-center gap-2 bg-white shadow-sm"
+        >
+          <LogOut size={16} />
+          Log Out
+        </button>
+
+        {/* Footer */}
+        <div className="text-center py-2">
+          <p className="text-xs text-gray-400">
+            © {new Date().getFullYear()}. Built with ❤️ using{" "}
+            <a
+              href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-teal-500 hover:underline"
+            >
+              caffeine.ai
+            </a>
+          </p>
+        </div>
+      </div>
+
+      <BottomNav active="mine" onNavigate={navigate} />
     </motion.div>
   );
 }
@@ -1876,6 +2690,10 @@ export default function App() {
   const [rpCoins, setRpCoins] = useState(0);
   const [sellAmount] = useState(600.0);
   const [totalRevenue] = useState(0);
+  const [upiWallets, setUpiWallets] = useState<UpiWallet[]>([]);
+  const [sellTransactions, _setSellTransactions] = useState<SellTransaction[]>(
+    [],
+  );
 
   const { countdown, canResend, startTimer } = useOtpTimer();
 
@@ -2049,21 +2867,22 @@ export default function App() {
           />
         )}
         {screen === "sell-rp" && (
-          <PlaceholderScreen
+          <SellRPScreen
             key="sell-rp"
-            title="Sell RP"
-            emoji="💱"
-            activeNav="sell-rp"
             navigate={navigate}
+            upiWallets={upiWallets}
+            setUpiWallets={setUpiWallets}
+            sellTransactions={sellTransactions}
           />
         )}
         {screen === "mine" && (
-          <PlaceholderScreen
+          <MineScreen
             key="mine"
-            title="My Profile"
-            emoji="👤"
-            activeNav="mine"
+            buyAmount={buyAmount}
+            rpCoins={rpCoins}
+            userPhone={phone}
             navigate={navigate}
+            onLogout={() => navigate("splash")}
           />
         )}
       </AnimatePresence>
