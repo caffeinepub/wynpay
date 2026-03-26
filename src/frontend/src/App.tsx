@@ -1884,10 +1884,10 @@ function UpiPaymentModal({
               <button
                 type="button"
                 onClick={onCancel}
-                className="w-full mt-3 py-2 text-gray-400 text-sm font-medium"
+                className="w-full mt-4 py-3 rounded-xl border-2 border-red-400 text-red-500 text-sm font-semibold hover:bg-red-50 transition-colors"
                 data-ocid="upi_payment.cancel_button"
               >
-                Cancel
+                Cancel Order
               </button>
             </>
           )}
