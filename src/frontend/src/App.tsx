@@ -38,12 +38,9 @@ import { toast } from "sonner";
 type Screen =
   | "splash"
   | "login-phone"
-  | "login-otp"
   | "signup-details"
-  | "signup-otp"
   | "signup-password"
   | "forgot-phone"
-  | "forgot-otp"
   | "forgot-password"
   | "home"
   | "rewards"
@@ -51,9 +48,6 @@ type Screen =
   | "buy-rp"
   | "sell-rp"
   | "mine";
-
-const DEMO_OTP = "123456";
-const OTP_COUNTDOWN = 30;
 
 // ─── UPI Wallet Types ────────────────────────────────────────────────────────
 type UpiWalletType = "PhonePe" | "Paytm" | "MobiKwik" | "FreeCharge";
@@ -126,86 +120,6 @@ const _LEVELS = [
     ],
   },
 ];
-
-// ─── OTP Timer Hook ───────────────────────────────────────────────────────────
-function useOtpTimer() {
-  const [countdown, setCountdown] = useState(0);
-  const [canResend, setCanResend] = useState(false);
-  const startTimer = useCallback(() => {
-    setCountdown(OTP_COUNTDOWN);
-    setCanResend(false);
-  }, []);
-  useEffect(() => {
-    if (countdown <= 0) {
-      setCanResend(true);
-      return;
-    }
-    const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
-    return () => clearTimeout(t);
-  }, [countdown]);
-  return { countdown, canResend, startTimer };
-}
-
-// ─── OTP Input ──────────────────────────────────────────────────────────────
-function OtpInput({
-  value,
-  onChange,
-}: { value: string; onChange: (v: string) => void }) {
-  const refs = useRef<(HTMLInputElement | null)[]>([]);
-  const digits = Array.from({ length: 6 }, (_, i) => value[i] ?? "");
-
-  const handleChange = (i: number, v: string) => {
-    const char = v.replace(/\D/g, "").slice(-1);
-    const next = [...digits];
-    next[i] = char;
-    onChange(next.join(""));
-    if (char && i < 5) refs.current[i + 1]?.focus();
-  };
-
-  const handleKeyDown = (i: number, e: React.KeyboardEvent) => {
-    if (e.key === "Backspace" && !digits[i] && i > 0)
-      refs.current[i - 1]?.focus();
-  };
-
-  const handlePaste = (e: React.ClipboardEvent) => {
-    e.preventDefault();
-    const pasted = e.clipboardData
-      .getData("text")
-      .replace(/\D/g, "")
-      .slice(0, 6);
-    onChange(pasted.padEnd(6, "").slice(0, 6));
-    refs.current[Math.min(pasted.length, 5)]?.focus();
-  };
-
-  return (
-    <div className="flex flex-col items-center gap-3">
-      <div className="flex gap-2 justify-center" data-ocid="otp.input">
-        {digits.map((d, i) => (
-          <input
-            key={i.toString()}
-            ref={(el) => {
-              refs.current[i] = el;
-            }}
-            type="text"
-            inputMode="numeric"
-            maxLength={1}
-            value={d}
-            onChange={(e) => handleChange(i, e.target.value)}
-            onKeyDown={(e) => handleKeyDown(i, e)}
-            onPaste={handlePaste}
-            className="w-12 h-14 text-center text-xl font-bold rounded-xl border-2 bg-muted text-foreground transition-all duration-200 outline-none focus:border-primary"
-            style={{
-              borderColor: d ? "oklch(0.72 0.14 75)" : "oklch(0.28 0.03 250)",
-            }}
-          />
-        ))}
-      </div>
-      <p className="text-xs text-muted-foreground">
-        Demo OTP: <span className="font-semibold text-primary">123456</span>
-      </p>
-    </div>
-  );
-}
 
 // ─── Screen Wrapper ──────────────────────────────────────────────────────────
 function ScreenWrapper({
@@ -443,25 +357,31 @@ function SplashScreen({ navigate }: { navigate: (s: Screen) => void }) {
   );
 }
 
-// ─── Login Phone Screen ───────────────────────────────────────────────────────
-function LoginPhoneScreen({
+// ─── Login Screen ────────────────────────────────────────────────────────────
+function LoginScreen({
   phone,
   setPhone,
+  loginPassword,
+  setLoginPassword,
   errors,
   setErrors,
   navigate,
-  sendOtp,
 }: {
   phone: string;
   setPhone: (v: string) => void;
+  loginPassword: string;
+  setLoginPassword: (v: string) => void;
   errors: Record<string, string>;
   setErrors: (e: Record<string, string>) => void;
   navigate: (s: Screen) => void;
-  sendOtp: (next: Screen) => void;
 }) {
-  const validatePhone = () => {
-    if (phone.replace(/\D/g, "").length < 10) {
-      setErrors({ phone: "Please enter a valid phone number" });
+  const validate = () => {
+    const errs: Record<string, string> = {};
+    if (phone.replace(/\D/g, "").length < 10)
+      errs.phone = "Please enter a valid phone number";
+    if (!loginPassword.trim()) errs.password = "Please enter your password";
+    if (Object.keys(errs).length) {
+      setErrors(errs);
       return false;
     }
     return true;
@@ -471,7 +391,7 @@ function LoginPhoneScreen({
     <ScreenWrapper>
       <AuthCard
         title="Welcome back"
-        subtitle="Enter your phone number to continue"
+        subtitle="Login to your WynPay account"
         onBack={() => navigate("splash")}
       >
         <div className="space-y-2">
@@ -498,14 +418,35 @@ function LoginPhoneScreen({
             </p>
           )}
         </div>
+        <PasswordField
+          id="login-password"
+          label="Password"
+          value={loginPassword}
+          onChange={(v) => {
+            setLoginPassword(v);
+            setErrors({});
+          }}
+          placeholder="Enter your password"
+        />
+        {errors.password && (
+          <p
+            className="text-destructive text-sm"
+            data-ocid="login.password.error_state"
+          >
+            {errors.password}
+          </p>
+        )}
         <Button
           className="w-full h-12 rounded-xl font-semibold gold-gradient text-background hover:opacity-90"
           onClick={() => {
-            if (validatePhone()) sendOtp("login-otp");
+            if (validate()) {
+              navigate("home");
+              toast.success("Welcome back to WynPay! 🎉");
+            }
           }}
-          data-ocid="login.send_otp.button"
+          data-ocid="login.submit.button"
         >
-          Send OTP
+          Login
         </Button>
         <div className="text-center">
           <button
@@ -533,101 +474,6 @@ function LoginPhoneScreen({
   );
 }
 
-// ─── Login OTP Screen ─────────────────────────────────────────────────────────
-function LoginOtpScreen({
-  phone,
-  otp,
-  setOtp,
-  errors,
-  setErrors,
-  navigate,
-  startTimer,
-  canResend,
-  countdown,
-}: {
-  phone: string;
-  otp: string;
-  setOtp: (v: string) => void;
-  errors: Record<string, string>;
-  setErrors: (e: Record<string, string>) => void;
-  navigate: (s: Screen) => void;
-  startTimer: () => void;
-  canResend: boolean;
-  countdown: number;
-}) {
-  const validateOtp = () => {
-    if (otp.replace(/\s/g, "").length < 6) {
-      setErrors({ otp: "Please enter the 6-digit OTP" });
-      return false;
-    }
-    if (otp.replace(/\s/g, "") !== DEMO_OTP) {
-      setErrors({ otp: "Incorrect OTP. Use 123456 for demo." });
-      return false;
-    }
-    return true;
-  };
-
-  return (
-    <ScreenWrapper>
-      <AuthCard
-        title="Verify your number"
-        subtitle={`Enter the 6-digit code sent to ${phone}`}
-        onBack={() => navigate("login-phone")}
-      >
-        <OtpInput
-          value={otp}
-          onChange={(v) => {
-            setOtp(v);
-            setErrors({});
-          }}
-        />
-        {errors.otp && (
-          <p
-            className="text-destructive text-sm text-center"
-            data-ocid="login.otp.error_state"
-          >
-            {errors.otp}
-          </p>
-        )}
-        <div className="text-center">
-          {canResend ? (
-            <button
-              type="button"
-              onClick={() => {
-                startTimer();
-                toast.success("OTP resent! Use 123456 for demo", {
-                  icon: "📱",
-                });
-              }}
-              className="text-secondary text-sm font-medium"
-              data-ocid="login.otp.resend_button"
-            >
-              Resend OTP
-            </button>
-          ) : (
-            <span className="text-muted-foreground text-sm">
-              Resend in{" "}
-              <span className="text-primary font-semibold">{countdown}s</span>
-            </span>
-          )}
-        </div>
-        <Button
-          className="w-full h-12 rounded-xl font-semibold gold-gradient text-background hover:opacity-90"
-          onClick={() => {
-            if (validateOtp()) {
-              navigate("home");
-              toast.success("Welcome back to WynPay! 🎉");
-            }
-          }}
-          data-ocid="login.verify.button"
-        >
-          Verify &amp; Login
-        </Button>
-      </AuthCard>
-    </ScreenWrapper>
-  );
-}
-
 // ─── Signup Details Screen ────────────────────────────────────────────────────
 function SignupDetailsScreen({
   name,
@@ -637,7 +483,6 @@ function SignupDetailsScreen({
   errors,
   setErrors,
   navigate,
-  sendOtp,
   setUserName,
 }: {
   name: string;
@@ -647,7 +492,6 @@ function SignupDetailsScreen({
   errors: Record<string, string>;
   setErrors: (e: Record<string, string>) => void;
   navigate: (s: Screen) => void;
-  sendOtp: (next: Screen) => void;
   setUserName: (v: string) => void;
 }) {
   return (
@@ -717,11 +561,11 @@ function SignupDetailsScreen({
               return;
             }
             setUserName(name);
-            sendOtp("signup-otp");
+            navigate("signup-password");
           }}
-          data-ocid="signup.send_otp.button"
+          data-ocid="signup.next.button"
         >
-          Send OTP
+          Next
         </Button>
         <div className="border-t border-border pt-4 text-center">
           <span className="text-muted-foreground text-sm">
@@ -736,96 +580,6 @@ function SignupDetailsScreen({
             Login
           </button>
         </div>
-      </AuthCard>
-    </ScreenWrapper>
-  );
-}
-
-// ─── Signup OTP Screen ────────────────────────────────────────────────────────
-function SignupOtpScreen({
-  phone,
-  otp,
-  setOtp,
-  errors,
-  setErrors,
-  navigate,
-  startTimer,
-  canResend,
-  countdown,
-}: {
-  phone: string;
-  otp: string;
-  setOtp: (v: string) => void;
-  errors: Record<string, string>;
-  setErrors: (e: Record<string, string>) => void;
-  navigate: (s: Screen) => void;
-  startTimer: () => void;
-  canResend: boolean;
-  countdown: number;
-}) {
-  const validateOtp = () => {
-    if (otp.replace(/\s/g, "").length < 6) {
-      setErrors({ otp: "Please enter the 6-digit OTP" });
-      return false;
-    }
-    if (otp.replace(/\s/g, "") !== DEMO_OTP) {
-      setErrors({ otp: "Incorrect OTP. Use 123456 for demo." });
-      return false;
-    }
-    return true;
-  };
-
-  return (
-    <ScreenWrapper>
-      <AuthCard
-        title="Verify your number"
-        subtitle={`We sent a code to ${phone}`}
-        onBack={() => navigate("signup-details")}
-      >
-        <OtpInput
-          value={otp}
-          onChange={(v) => {
-            setOtp(v);
-            setErrors({});
-          }}
-        />
-        {errors.otp && (
-          <p
-            className="text-destructive text-sm text-center"
-            data-ocid="signup.otp.error_state"
-          >
-            {errors.otp}
-          </p>
-        )}
-        <div className="text-center">
-          {canResend ? (
-            <button
-              type="button"
-              onClick={() => {
-                startTimer();
-                toast.success("OTP resent!", { icon: "📱" });
-              }}
-              className="text-secondary text-sm font-medium"
-              data-ocid="signup.otp.resend_button"
-            >
-              Resend OTP
-            </button>
-          ) : (
-            <span className="text-muted-foreground text-sm">
-              Resend in{" "}
-              <span className="text-primary font-semibold">{countdown}s</span>
-            </span>
-          )}
-        </div>
-        <Button
-          className="w-full h-12 rounded-xl font-semibold gold-gradient text-background hover:opacity-90"
-          onClick={() => {
-            if (validateOtp()) navigate("signup-password");
-          }}
-          data-ocid="signup.verify.button"
-        >
-          Verify
-        </Button>
       </AuthCard>
     </ScreenWrapper>
   );
@@ -856,7 +610,7 @@ function SignupPasswordScreen({
       <AuthCard
         title="Set your password"
         subtitle="Create a strong password"
-        onBack={() => navigate("signup-otp")}
+        onBack={() => navigate("signup-details")}
       >
         <PasswordField
           id="signup-password"
@@ -924,14 +678,12 @@ function ForgotPhoneScreen({
   errors,
   setErrors,
   navigate,
-  sendOtp,
 }: {
   phone: string;
   setPhone: (v: string) => void;
   errors: Record<string, string>;
   setErrors: (e: Record<string, string>) => void;
   navigate: (s: Screen) => void;
-  sendOtp: (next: Screen) => void;
 }) {
   const validatePhone = () => {
     if (phone.replace(/\D/g, "").length < 10) {
@@ -975,101 +727,11 @@ function ForgotPhoneScreen({
         <Button
           className="w-full h-12 rounded-xl font-semibold gold-gradient text-background hover:opacity-90"
           onClick={() => {
-            if (validatePhone()) sendOtp("forgot-otp");
+            if (validatePhone()) navigate("forgot-password");
           }}
-          data-ocid="forgot.send_otp.button"
+          data-ocid="forgot.submit.button"
         >
-          Send OTP
-        </Button>
-      </AuthCard>
-    </ScreenWrapper>
-  );
-}
-
-// ─── Forgot OTP Screen ────────────────────────────────────────────────────────
-function ForgotOtpScreen({
-  phone,
-  otp,
-  setOtp,
-  errors,
-  setErrors,
-  navigate,
-  startTimer,
-  canResend,
-  countdown,
-}: {
-  phone: string;
-  otp: string;
-  setOtp: (v: string) => void;
-  errors: Record<string, string>;
-  setErrors: (e: Record<string, string>) => void;
-  navigate: (s: Screen) => void;
-  startTimer: () => void;
-  canResend: boolean;
-  countdown: number;
-}) {
-  const validateOtp = () => {
-    if (otp.replace(/\s/g, "").length < 6) {
-      setErrors({ otp: "Please enter the 6-digit OTP" });
-      return false;
-    }
-    if (otp.replace(/\s/g, "") !== DEMO_OTP) {
-      setErrors({ otp: "Incorrect OTP. Use 123456 for demo." });
-      return false;
-    }
-    return true;
-  };
-
-  return (
-    <ScreenWrapper>
-      <AuthCard
-        title="Verify identity"
-        subtitle={`Enter the code sent to ${phone}`}
-        onBack={() => navigate("forgot-phone")}
-      >
-        <OtpInput
-          value={otp}
-          onChange={(v) => {
-            setOtp(v);
-            setErrors({});
-          }}
-        />
-        {errors.otp && (
-          <p
-            className="text-destructive text-sm text-center"
-            data-ocid="forgot.otp.error_state"
-          >
-            {errors.otp}
-          </p>
-        )}
-        <div className="text-center">
-          {canResend ? (
-            <button
-              type="button"
-              onClick={() => {
-                startTimer();
-                toast.success("OTP resent!");
-              }}
-              className="text-secondary text-sm font-medium"
-              data-ocid="forgot.otp.resend_button"
-            >
-              Resend OTP
-            </button>
-          ) : (
-            <span className="text-muted-foreground text-sm">
-              Resend in{" "}
-              <span className="text-primary font-semibold">{countdown}s</span>
-            </span>
-          )}
-        </div>
-        <Button
-          className="w-full h-12 rounded-xl font-semibold gold-gradient text-background hover:opacity-90"
-          onClick={() => {
-            if (validateOtp()) navigate("forgot-password");
-          }}
-          data-ocid="forgot.verify.button"
-        >
-          Verify
+          Continue
         </Button>
       </AuthCard>
     </ScreenWrapper>
@@ -1099,7 +761,7 @@ function ForgotPasswordScreen({
       <AuthCard
         title="New password"
         subtitle="Create a new password"
-        onBack={() => navigate("forgot-otp")}
+        onBack={() => navigate("forgot-phone")}
       >
         <PasswordField
           id="forgot-new-password"
@@ -2679,7 +2341,7 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>("splash");
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
-  const [otp, setOtp] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -2695,25 +2357,10 @@ export default function App() {
     [],
   );
 
-  const { countdown, canResend, startTimer } = useOtpTimer();
-
   const navigate = useCallback((s: Screen) => {
-    setOtp("");
     setErrors({});
     setScreen(s);
   }, []);
-
-  const sendOtp = useCallback(
-    (nextScreen: Screen) => {
-      startTimer();
-      navigate(nextScreen);
-      toast.success("OTP sent! For demo: use code 123456", {
-        duration: 5000,
-        icon: "📱",
-      });
-    },
-    [startTimer, navigate],
-  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -2733,28 +2380,15 @@ export default function App() {
           <SplashScreen key="splash" navigate={navigate} />
         )}
         {screen === "login-phone" && (
-          <LoginPhoneScreen
+          <LoginScreen
             key="login-phone"
             phone={phone}
             setPhone={setPhone}
+            loginPassword={loginPassword}
+            setLoginPassword={setLoginPassword}
             errors={errors}
             setErrors={setErrors}
             navigate={navigate}
-            sendOtp={sendOtp}
-          />
-        )}
-        {screen === "login-otp" && (
-          <LoginOtpScreen
-            key="login-otp"
-            phone={phone}
-            otp={otp}
-            setOtp={setOtp}
-            errors={errors}
-            setErrors={setErrors}
-            navigate={navigate}
-            startTimer={startTimer}
-            canResend={canResend}
-            countdown={countdown}
           />
         )}
         {screen === "signup-details" && (
@@ -2767,24 +2401,10 @@ export default function App() {
             errors={errors}
             setErrors={setErrors}
             navigate={navigate}
-            sendOtp={sendOtp}
             setUserName={setUserName}
           />
         )}
-        {screen === "signup-otp" && (
-          <SignupOtpScreen
-            key="signup-otp"
-            phone={phone}
-            otp={otp}
-            setOtp={setOtp}
-            errors={errors}
-            setErrors={setErrors}
-            navigate={navigate}
-            startTimer={startTimer}
-            canResend={canResend}
-            countdown={countdown}
-          />
-        )}
+
         {screen === "signup-password" && (
           <SignupPasswordScreen
             key="signup-password"
@@ -2806,21 +2426,6 @@ export default function App() {
             errors={errors}
             setErrors={setErrors}
             navigate={navigate}
-            sendOtp={sendOtp}
-          />
-        )}
-        {screen === "forgot-otp" && (
-          <ForgotOtpScreen
-            key="forgot-otp"
-            phone={phone}
-            otp={otp}
-            setOtp={setOtp}
-            errors={errors}
-            setErrors={setErrors}
-            navigate={navigate}
-            startTimer={startTimer}
-            canResend={canResend}
-            countdown={countdown}
           />
         )}
         {screen === "forgot-password" && (
