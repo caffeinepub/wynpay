@@ -258,7 +258,7 @@ function AuthCard({
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 relative">
       <div
-        className="absolute top-0 left-0 right-0 h-64 opacity-30"
+        className="absolute top-0 left-0 right-0 h-64 opacity-30 pointer-events-none"
         style={{
           background:
             "radial-gradient(ellipse at 50% 0%, oklch(0.72 0.14 75 / 0.3) 0%, transparent 70%)",
