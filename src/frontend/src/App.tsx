@@ -54,7 +54,9 @@ type Screen =
   | "newcomer-bonus"
   | "buy-rp"
   | "sell-rp"
-  | "mine";
+  | "mine"
+  | "buy-rp-record"
+  | "sell-rp-record";
 
 // ─── UPI Wallet Types ────────────────────────────────────────────────────────
 type UpiWalletType = "PhonePe" | "Paytm" | "MobiKwik" | "FreeCharge";
@@ -1770,6 +1772,412 @@ function UpiPaymentModal({
   );
 }
 
+// ─── Clipboard Empty State ────────────────────────────────────────────────────
+function ClipboardEmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 px-8">
+      <svg
+        viewBox="0 0 200 200"
+        width="160"
+        height="160"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        role="img"
+        aria-label="No orders illustration"
+      >
+        {/* Cloud top-left */}
+        <ellipse cx="38" cy="42" rx="14" ry="9" fill="#e2e8f0" />
+        <ellipse cx="28" cy="46" rx="10" ry="7" fill="#e2e8f0" />
+        <ellipse cx="50" cy="46" rx="10" ry="7" fill="#e2e8f0" />
+        {/* Paper plane top-right */}
+        <g transform="translate(148, 28) rotate(-30)">
+          <polygon points="0,0 24,8 8,20" fill="#cbd5e1" />
+          <polygon points="0,0 8,20 4,12" fill="#94a3b8" />
+          <line
+            x1="8"
+            y1="20"
+            x2="14"
+            y2="14"
+            stroke="#94a3b8"
+            strokeWidth="1.5"
+          />
+        </g>
+        {/* Clipboard body */}
+        <rect
+          x="55"
+          y="55"
+          width="90"
+          height="110"
+          rx="8"
+          fill="#f1f5f9"
+          stroke="#cbd5e1"
+          strokeWidth="2"
+        />
+        {/* Clipboard clip at top */}
+        <rect
+          x="80"
+          y="48"
+          width="40"
+          height="16"
+          rx="6"
+          fill="#e2e8f0"
+          stroke="#cbd5e1"
+          strokeWidth="1.5"
+        />
+        <rect x="88" y="52" width="24" height="8" rx="4" fill="#cbd5e1" />
+        {/* Lines on clipboard */}
+        <line
+          x1="70"
+          y1="85"
+          x2="130"
+          y2="85"
+          stroke="#cbd5e1"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+        <line
+          x1="70"
+          y1="100"
+          x2="130"
+          y2="100"
+          stroke="#cbd5e1"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+        <line
+          x1="70"
+          y1="115"
+          x2="115"
+          y2="115"
+          stroke="#cbd5e1"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+        {/* Paper peeking from bottom */}
+        <rect
+          x="65"
+          y="148"
+          width="70"
+          height="22"
+          rx="4"
+          fill="#e2e8f0"
+          stroke="#cbd5e1"
+          strokeWidth="1.5"
+        />
+        <line
+          x1="75"
+          y1="156"
+          x2="120"
+          y2="156"
+          stroke="#cbd5e1"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+        <line
+          x1="75"
+          y1="163"
+          x2="110"
+          y2="163"
+          stroke="#cbd5e1"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+        {/* Small checkmark circle */}
+        <circle cx="100" cy="135" r="10" fill="#e2e8f0" />
+        <path
+          d="M95 135 L98 138 L105 131"
+          stroke="#94a3b8"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+      <p className="text-gray-400 text-sm font-medium mt-2 text-center">
+        There are currently no orders
+      </p>
+    </div>
+  );
+}
+
+// ─── Buy RP Record Screen ─────────────────────────────────────────────────────
+function BuyRPRecordScreen({ navigate }: { navigate: (s: Screen) => void }) {
+  const tabs = ["Unfinished", "Bank lock", "Locked", "Success", "Fail"];
+  const [activeTab, setActiveTab] = useState(0);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 40 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -40 }}
+      className="min-h-screen flex flex-col max-w-[430px] mx-auto bg-gray-100"
+      data-ocid="buy_rp_record.page"
+    >
+      {/* Header */}
+      <header className="px-4 pt-10 pb-3 bg-white shadow-sm flex items-center gap-3">
+        <button
+          type="button"
+          data-ocid="buy_rp_record.back.button"
+          onClick={() => navigate("buy-rp")}
+          className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
+        >
+          <ArrowLeft size={16} className="text-gray-600" />
+        </button>
+        <span className="flex-1 font-bold text-gray-800 text-base text-center pr-8">
+          Buy RP record
+        </span>
+      </header>
+
+      {/* Tab bar */}
+      <div className="bg-white border-b border-gray-100 overflow-x-auto scrollbar-hide">
+        <div className="flex min-w-max">
+          {tabs.map((tab, i) => (
+            <button
+              key={tab}
+              type="button"
+              data-ocid={`buy_rp_record.tab.${i + 1}`}
+              onClick={() => setActiveTab(i)}
+              className={`flex-shrink-0 px-5 py-3 text-sm relative transition-colors ${
+                activeTab === i
+                  ? "font-bold text-gray-900"
+                  : "font-normal text-gray-400"
+              }`}
+            >
+              {tab}
+              {activeTab === i && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-500 rounded-full" />
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Content */}
+      <main className="flex-1 overflow-y-auto">
+        <ClipboardEmptyState />
+      </main>
+    </motion.div>
+  );
+}
+
+// ─── Sell RP Record Screen ────────────────────────────────────────────────────
+interface RandomSellOrder {
+  id: string;
+  amount: number;
+  createdAt: number;
+  accepted: boolean;
+}
+
+function SellRPRecordScreen({
+  navigate,
+  rpCoins,
+}: {
+  navigate: (s: Screen) => void;
+  rpCoins: number;
+}) {
+  const tabs = [
+    "Unknown order",
+    "Unfinished",
+    "Bank lock",
+    "Locked",
+    "Success",
+  ];
+  const [activeTab, setActiveTab] = useState(0);
+  const [now, setNow] = useState(Date.now());
+  const [randomOrders, setRandomOrders] = useState<RandomSellOrder[]>(() => [
+    {
+      id: `order-${Date.now()}`,
+      amount: [100, 200, 300, 500, 1000, 2000][Math.floor(Math.random() * 6)],
+      createdAt: Date.now(),
+      accepted: false,
+    },
+  ]);
+  const [acceptedOrders, setAcceptedOrders] = useState<RandomSellOrder[]>([]);
+
+  // Tick every second to update countdowns
+  useEffect(() => {
+    const tick = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(tick);
+  }, []);
+
+  // Remove expired orders every second
+  useEffect(() => {
+    const cleanup = setInterval(() => {
+      setRandomOrders((prev) =>
+        prev.filter((o) => Date.now() - o.createdAt < 120000),
+      );
+    }, 1000);
+    return () => clearInterval(cleanup);
+  }, []);
+
+  // Add a new random order every 2 minutes
+  useEffect(() => {
+    const amounts = [100, 200, 300, 500, 1000, 2000];
+    const generator = setInterval(() => {
+      setRandomOrders((prev) => [
+        ...prev,
+        {
+          id: `order-${Date.now()}`,
+          amount: amounts[Math.floor(Math.random() * amounts.length)],
+          createdAt: Date.now(),
+          accepted: false,
+        },
+      ]);
+    }, 120000);
+    return () => clearInterval(generator);
+  }, []);
+
+  const handleAccept = (order: RandomSellOrder) => {
+    if (rpCoins < 100) return;
+    setRandomOrders((prev) => prev.filter((o) => o.id !== order.id));
+    setAcceptedOrders((prev) => [...prev, { ...order, accepted: true }]);
+    toast.success("Order accepted! 🎉");
+  };
+
+  const formatCountdown = (createdAt: number) => {
+    const elapsed = Math.floor((now - createdAt) / 1000);
+    const remaining = Math.max(0, 120 - elapsed);
+    const mm = Math.floor(remaining / 60)
+      .toString()
+      .padStart(2, "0");
+    const ss = (remaining % 60).toString().padStart(2, "0");
+    return `${mm}:${ss}`;
+  };
+
+  const activeOrders = randomOrders.filter((o) => !o.accepted);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 40 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -40 }}
+      className="min-h-screen flex flex-col max-w-[430px] mx-auto bg-gray-100"
+      data-ocid="sell_rp_record.page"
+    >
+      {/* Header */}
+      <header className="px-4 pt-10 pb-3 bg-white shadow-sm flex items-center gap-3">
+        <button
+          type="button"
+          data-ocid="sell_rp_record.back.button"
+          onClick={() => navigate("sell-rp")}
+          className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
+        >
+          <ArrowLeft size={16} className="text-gray-600" />
+        </button>
+        <span className="flex-1 font-bold text-gray-800 text-base text-center pr-8">
+          Sell RP record
+        </span>
+      </header>
+
+      {/* Tab bar */}
+      <div className="bg-white border-b border-gray-100 overflow-x-auto scrollbar-hide">
+        <div className="flex min-w-max">
+          {tabs.map((tab, i) => (
+            <button
+              key={tab}
+              type="button"
+              data-ocid={`sell_rp_record.tab.${i + 1}`}
+              onClick={() => setActiveTab(i)}
+              className={`flex-shrink-0 px-5 py-3 text-sm relative transition-colors ${
+                activeTab === i
+                  ? "font-bold text-gray-900"
+                  : "font-normal text-gray-400"
+              }`}
+            >
+              {tab}
+              {activeTab === i && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-500 rounded-full" />
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Content */}
+      <main className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+        {activeTab === 0 &&
+          (activeOrders.length === 0 ? (
+            <ClipboardEmptyState />
+          ) : (
+            activeOrders.map((order, idx) => {
+              const countdown = formatCountdown(order.createdAt);
+              const canAccept = rpCoins >= 100;
+              return (
+                <div
+                  key={order.id}
+                  data-ocid={`sell_rp_record.order.item.${idx + 1}`}
+                  className="bg-white rounded-xl shadow-sm px-4 py-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-gray-500 font-medium mb-0.5">
+                        Sell Order
+                      </p>
+                      <p className="text-xl font-black text-teal-600">
+                        ₹{order.amount}.00
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <span className="text-sm font-bold text-orange-500">
+                        {countdown}
+                      </span>
+                      <button
+                        type="button"
+                        data-ocid={`sell_rp_record.accept.button.${idx + 1}`}
+                        disabled={!canAccept}
+                        onClick={() => handleAccept(order)}
+                        className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-colors ${
+                          canAccept
+                            ? "bg-green-500 text-white hover:bg-green-600"
+                            : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                        }`}
+                      >
+                        Accept
+                      </button>
+                      {!canAccept && (
+                        <p className="text-[10px] text-red-400 text-right">
+                          Min. ₹100 balance required
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          ))}
+
+        {activeTab === 1 &&
+          (acceptedOrders.length === 0 ? (
+            <ClipboardEmptyState />
+          ) : (
+            acceptedOrders.map((order, idx) => (
+              <div
+                key={order.id}
+                data-ocid={`sell_rp_record.unfinished.item.${idx + 1}`}
+                className="bg-white rounded-xl shadow-sm px-4 py-3 flex items-center justify-between"
+              >
+                <div>
+                  <p className="text-xs text-gray-500 font-medium mb-0.5">
+                    Sell Order
+                  </p>
+                  <p className="text-xl font-black text-teal-600">
+                    ₹{order.amount}.00
+                  </p>
+                </div>
+                <span className="text-xs font-semibold text-amber-500 bg-amber-50 px-3 py-1 rounded-full">
+                  Processing...
+                </span>
+              </div>
+            ))
+          ))}
+
+        {(activeTab === 2 || activeTab === 3 || activeTab === 4) && (
+          <ClipboardEmptyState />
+        )}
+      </main>
+    </motion.div>
+  );
+}
+
 // ─── Buy RP Screen ────────────────────────────────────────────────────────────
 function BuyRPScreen({
   navigate,
@@ -1853,6 +2261,7 @@ function BuyRPScreen({
           <h1 className="flex-1 font-bold text-white text-base">Buy RP</h1>
           <button
             type="button"
+            onClick={() => navigate("buy-rp-record")}
             className="w-8 h-8 rounded-full flex items-center justify-center bg-white/20 hover:bg-white/30 transition-colors"
             data-ocid="buy_rp.list.button"
           >
@@ -2001,7 +2410,6 @@ function SellRPScreen({
   sellTransactions: SellTransaction[];
 }) {
   const [showAddWallet, setShowAddWallet] = useState(false);
-  const [showRecords, setShowRecords] = useState(false);
   const [selectedWalletType, setSelectedWalletType] =
     useState<UpiWalletType | null>(null);
   const [upiInput, setUpiInput] = useState("");
@@ -2088,7 +2496,7 @@ function SellRPScreen({
             <button
               type="button"
               data-ocid="sell_rp.record.button"
-              onClick={() => setShowRecords(true)}
+              onClick={() => navigate("sell-rp-record")}
               className="px-4 py-2 rounded-xl border-2 text-sm font-bold"
               style={{ borderColor: "#008080", color: "#008080" }}
             >
@@ -2267,77 +2675,6 @@ function SellRPScreen({
             >
               Add Wallet
             </button>
-          </motion.div>
-        </div>
-      )}
-
-      {/* Records Modal */}
-      {showRecords && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center"
-          data-ocid="sell_rp.records.modal"
-        >
-          <button
-            type="button"
-            aria-label="Close"
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setShowRecords(false)}
-          />
-          <motion.div
-            initial={{ y: 80, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="relative z-10 bg-white w-full max-w-[430px] rounded-t-3xl p-5 pb-8 max-h-[80vh] flex flex-col"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-black text-gray-800">
-                Transaction Records
-              </h3>
-              <button
-                type="button"
-                data-ocid="sell_rp.records.close_button"
-                onClick={() => setShowRecords(false)}
-                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
-              >
-                <X size={16} className="text-gray-600" />
-              </button>
-            </div>
-
-            <div className="overflow-y-auto flex-1">
-              {sellTransactions.length === 0 ? (
-                <div
-                  className="flex flex-col items-center justify-center py-12 gap-2"
-                  data-ocid="sell_rp.records.empty_state"
-                >
-                  <div className="text-5xl">📋</div>
-                  <p className="text-sm text-gray-400">No transactions yet</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {sellTransactions.map((tx, idx) => (
-                    <div
-                      key={tx.id}
-                      data-ocid={`sell_rp.transaction.item.${idx + 1}`}
-                      className="flex items-center gap-3 p-3 rounded-xl bg-gray-50"
-                    >
-                      <div className="w-9 h-9 rounded-xl bg-teal-100 flex items-center justify-center flex-shrink-0">
-                        <Wallet size={16} className="text-teal-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-gray-700">
-                          {tx.walletName}
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          {new Date(tx.date).toLocaleString()}
-                        </p>
-                      </div>
-                      <p className="font-black text-teal-600 text-sm">
-                        +₹{tx.amount.toFixed(2)}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
           </motion.div>
         </div>
       )}
@@ -2768,6 +3105,16 @@ export default function App() {
             }
             navigate={navigate}
             onLogout={() => navigate("splash")}
+          />
+        )}
+        {screen === "buy-rp-record" && (
+          <BuyRPRecordScreen key="buy-rp-record" navigate={navigate} />
+        )}
+        {screen === "sell-rp-record" && (
+          <SellRPRecordScreen
+            key="sell-rp-record"
+            navigate={navigate}
+            rpCoins={rpCoins}
           />
         )}
       </AnimatePresence>
