@@ -1950,7 +1950,7 @@ function BuyRPScreen({
                     className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all active:scale-95 ${
                       tx.received
                         ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        : "bg-teal-600 text-white hover:bg-teal-700"
+                        : "bg-green-500 text-white hover:bg-green-600"
                     }`}
                     data-ocid={`buy_rp.item.${idx + 1}.button`}
                   >
