@@ -11,6 +11,7 @@ import { Toaster } from "@/components/ui/sonner";
 import {
   ArrowLeft,
   CheckCircle,
+  ChevronDown,
   ChevronRight,
   Copy,
   Eye,
@@ -24,6 +25,7 @@ import {
   Lock,
   LogOut,
   Plus,
+  RefreshCw,
   Send,
   ShoppingCart,
   Smartphone,
@@ -1539,10 +1541,11 @@ type TxEntry = {
   id: string;
   payment: number;
   award: number;
+  orderQty: number;
   received: boolean;
 };
 
-const LEVEL_TRANSACTIONS: TxEntry[][] = ALL_LEVELS.map((lv) => {
+const LEVEL_TRANSACTIONS: TxEntry[][] = ALL_LEVELS.map((lv, lvIdx) => {
   const entries: TxEntry[] = [];
   for (let i = 0; i < 9; i++) {
     const opt = lv.options[i % 2];
@@ -1550,6 +1553,7 @@ const LEVEL_TRANSACTIONS: TxEntry[][] = ALL_LEVELS.map((lv) => {
       id: generateId(),
       payment: opt.amount,
       award: opt.reward,
+      orderQty: Math.floor(((lvIdx * 7 + i * 37 + opt.amount) % 500) + 1),
       received: false,
     });
   }
@@ -1786,6 +1790,9 @@ function BuyRPScreen({
   const [txData, setTxData] = useState<TxEntry[][]>(() =>
     LEVEL_TRANSACTIONS.map((lvl) => lvl.map((tx) => ({ ...tx }))),
   );
+  const [sortOrder, setSortOrder] = useState<"low-to-high" | "high-to-low">(
+    "low-to-high",
+  );
 
   const handleReceive = (txIdx: number) => {
     const tx = txData[activeLevel][txIdx];
@@ -1801,12 +1808,31 @@ function BuyRPScreen({
     });
   };
 
+  const handleRefresh = () => {
+    setTxData((prev) => {
+      const next = prev.map((lvl, lvIdx) =>
+        lvl.map((tx, i) => ({
+          ...tx,
+          orderQty: Math.floor(
+            ((lvIdx * 11 + i * 41 + tx.payment + (Date.now() % 100)) % 500) + 1,
+          ),
+        })),
+      );
+      return next;
+    });
+    toast.success("Refreshed!");
+  };
+
+  const sortedTxData = [...txData[activeLevel]].sort((a, b) =>
+    sortOrder === "low-to-high" ? a.payment - b.payment : b.payment - a.payment,
+  );
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 40 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -40 }}
-      className="min-h-screen flex flex-col max-w-[430px] mx-auto bg-slate-900"
+      className="min-h-screen flex flex-col max-w-[430px] mx-auto bg-white"
       data-ocid="buy_rp.page"
     >
       {/* Teal header with level tabs */}
@@ -1852,51 +1878,95 @@ function BuyRPScreen({
         </div>
       </header>
 
+      {/* Filter bar */}
+      <div className="flex items-center justify-between px-4 py-2.5 bg-white border-b border-gray-100">
+        <button
+          type="button"
+          onClick={() =>
+            setSortOrder((prev) =>
+              prev === "low-to-high" ? "high-to-low" : "low-to-high",
+            )
+          }
+          className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-gray-100 text-teal-700 text-xs font-medium"
+          data-ocid="buy_rp.sort.toggle"
+        >
+          {sortOrder === "low-to-high"
+            ? "From low to high"
+            : "From high to low"}
+          <ChevronDown size={12} />
+        </button>
+        <button
+          type="button"
+          onClick={handleRefresh}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-teal-600 text-white text-xs font-semibold"
+          data-ocid="buy_rp.refresh.button"
+        >
+          <RefreshCw size={12} />
+          Refresh
+        </button>
+      </div>
+
       {/* Transaction list */}
-      <main className="flex-1 overflow-y-auto pb-24 px-3 pt-3 space-y-2 bg-slate-900">
-        {txData[activeLevel].map((tx, idx) => (
-          <div
-            key={tx.id}
-            className="bg-slate-800 rounded-xl shadow-sm px-4 py-3 border border-slate-700"
-            data-ocid={`buy_rp.item.${idx + 1}`}
-          >
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="font-bold text-white text-sm truncate max-w-[60%]">
-                ID: {tx.id}...
-              </span>
-              <button
-                type="button"
-                onClick={() =>
-                  !tx.received &&
-                  setPayingTx({ idx, payment: tx.payment, award: tx.award })
-                }
-                disabled={tx.received}
-                className={`px-4 py-1 rounded-full border text-xs font-semibold transition-all ${
-                  tx.received
-                    ? "border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed"
-                    : "border-teal-600 text-teal-600 hover:bg-teal-50 active:scale-95"
-                }`}
-                data-ocid={`buy_rp.item.${idx + 1}.button`}
-              >
-                {tx.received ? "Received" : "Receive"}
-              </button>
+      <main
+        className="flex-1 overflow-y-auto pb-24 bg-white"
+        data-ocid="buy_rp.list"
+      >
+        {sortedTxData.map((tx, idx) => {
+          // Find real index in txData[activeLevel] for handleReceive
+          const realIdx = txData[activeLevel].findIndex((t) => t.id === tx.id);
+          const finalAmount = (tx.payment + tx.award + 2).toFixed(2);
+          return (
+            <div key={tx.id} data-ocid={`buy_rp.item.${idx + 1}`}>
+              <div className="flex items-center justify-between px-4 py-4">
+                {/* Left side */}
+                <div className="flex flex-col gap-1">
+                  <span className="font-bold text-gray-900 text-base">
+                    Order amount: {tx.payment}.0
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    Order quantity: {tx.orderQty}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm text-gray-500">Reward: </span>
+                    <span className="text-sm font-bold text-gray-900">
+                      {tx.award}.0
+                    </span>
+                    <sup className="text-xs font-bold text-teal-600">+2.0</sup>
+                  </div>
+                </div>
+                {/* Right side */}
+                <div className="flex flex-col items-end gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      !tx.received &&
+                      setPayingTx({
+                        idx: realIdx,
+                        payment: tx.payment,
+                        award: tx.award,
+                      })
+                    }
+                    disabled={tx.received}
+                    className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all active:scale-95 ${
+                      tx.received
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-teal-600 text-white hover:bg-teal-700"
+                    }`}
+                    data-ocid={`buy_rp.item.${idx + 1}.button`}
+                  >
+                    {tx.received ? "Received" : "Receive"}
+                  </button>
+                  <span className="text-xs font-medium text-teal-600">
+                    Final: {finalAmount} RP
+                  </span>
+                </div>
+              </div>
+              {idx < sortedTxData.length - 1 && (
+                <div className="h-px bg-gray-100 mx-4" />
+              )}
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-400">
-                Payment Amount:{" "}
-                <span className="font-medium text-teal-300">
-                  Rs. {tx.payment}
-                </span>
-              </span>
-              <span className="text-xs text-slate-400">
-                Award:{" "}
-                <span className="font-medium text-amber-400">
-                  Rs. {tx.award}
-                </span>
-              </span>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </main>
 
       <AnimatePresence>
