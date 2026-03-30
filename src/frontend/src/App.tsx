@@ -71,7 +71,7 @@ interface SellTransaction {
 }
 
 // ─── User Store Types ────────────────────────────────────────────────────────
-type RegisteredUser = { name: string; password: string };
+type RegisteredUser = { name: string; password: string; inviteCode?: string };
 type UserStore = Record<string, RegisteredUser>; // phone → user
 
 const WALLET_COLORS: Record<UpiWalletType, string> = {
@@ -548,7 +548,8 @@ function SignupScreen({
       setErrors(errs);
       return;
     }
-    saveUser(normalized, { name, password });
+    const newInviteCode = `WYN${Math.random().toString(36).substring(2, 5).toUpperCase()}${normalized.slice(-3)}`;
+    saveUser(normalized, { name, password, inviteCode: newInviteCode });
     setUserName(name);
     navigate("home");
     toast.success(`Welcome to WynPay, ${name}! 🎉`);
@@ -1887,7 +1888,7 @@ function BuyRPScreen({
               prev === "low-to-high" ? "high-to-low" : "low-to-high",
             )
           }
-          className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-gray-100 text-teal-700 text-xs font-medium"
+          className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium ${sortOrder === "low-to-high" ? "bg-green-500 text-white" : "bg-gray-100 text-gray-700"}`}
           data-ocid="buy_rp.sort.toggle"
         >
           {sortOrder === "low-to-high"
@@ -1956,7 +1957,7 @@ function BuyRPScreen({
                   >
                     {tx.received ? "Received" : "Receive"}
                   </button>
-                  <span className="text-xs font-medium text-teal-600">
+                  <span className="text-xs font-bold text-green-600">
                     Final: {finalAmount} RP
                   </span>
                 </div>
@@ -2349,17 +2350,18 @@ function MineScreen({
   buyAmount,
   rpCoins,
   userPhone,
+  inviteCode,
   navigate,
   onLogout,
 }: {
   buyAmount: number;
   rpCoins: number;
   userPhone: string;
+  inviteCode: string;
   navigate: (s: Screen) => void;
   onLogout: () => void;
 }) {
   const [copied, setCopied] = useState(false);
-  const inviteCode = `WYN${userPhone ? userPhone.slice(-4) : "0000"}`;
   const currentBalance = buyAmount + rpCoins;
 
   const handleCopy = () => {
@@ -2760,6 +2762,10 @@ export default function App() {
             buyAmount={buyAmount}
             rpCoins={rpCoins}
             userPhone={phone}
+            inviteCode={
+              registeredUsers[phone.replace(/\D/g, "")]?.inviteCode ||
+              `WYN${phone.slice(-4)}`
+            }
             navigate={navigate}
             onLogout={() => navigate("splash")}
           />
