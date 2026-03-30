@@ -1,5 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Toaster } from "@/components/ui/sonner";
@@ -38,9 +43,9 @@ import { toast } from "sonner";
 type Screen =
   | "splash"
   | "login-phone"
-  | "signup-details"
-  | "signup-password"
+  | "signup"
   | "forgot-phone"
+  | "forgot-otp"
   | "forgot-password"
   | "home"
   | "rewards"
@@ -62,6 +67,10 @@ interface SellTransaction {
   walletName: string;
   amount: number;
 }
+
+// ─── User Store Types ────────────────────────────────────────────────────────
+type RegisteredUser = { name: string; password: string };
+type UserStore = Record<string, RegisteredUser>; // phone → user
 
 const WALLET_COLORS: Record<UpiWalletType, string> = {
   PhonePe: "#5f259f",
@@ -343,7 +352,7 @@ function SplashScreen({ navigate }: { navigate: (s: Screen) => void }) {
           <Button
             variant="outline"
             className="w-full h-14 text-lg font-semibold rounded-2xl border-2 border-secondary text-secondary hover:bg-secondary/10 transition-colors"
-            onClick={() => navigate("signup-details")}
+            onClick={() => navigate("signup")}
             data-ocid="splash.signup_button"
           >
             Create Account
@@ -366,6 +375,8 @@ function LoginScreen({
   errors,
   setErrors,
   navigate,
+  registeredUsers,
+  setUserName,
 }: {
   phone: string;
   setPhone: (v: string) => void;
@@ -374,12 +385,24 @@ function LoginScreen({
   errors: Record<string, string>;
   setErrors: (e: Record<string, string>) => void;
   navigate: (s: Screen) => void;
+  registeredUsers: UserStore;
+  setUserName: (v: string) => void;
 }) {
   const validate = () => {
     const errs: Record<string, string> = {};
-    if (phone.replace(/\D/g, "").length < 10)
+    const normalized = phone.replace(/\D/g, "");
+    if (normalized.length < 10) {
       errs.phone = "Please enter a valid phone number";
-    if (!loginPassword.trim()) errs.password = "Please enter your password";
+    } else {
+      const existing = registeredUsers[normalized];
+      if (!existing) {
+        errs.phone = "No account found with this number. Please sign up.";
+      } else if (!loginPassword.trim()) {
+        errs.password = "Please enter your password";
+      } else if (existing.password !== loginPassword) {
+        errs.password = "Incorrect password. Please try again.";
+      }
+    }
     if (Object.keys(errs).length) {
       setErrors(errs);
       return false;
@@ -440,6 +463,8 @@ function LoginScreen({
           className="w-full h-12 rounded-xl font-semibold gold-gradient text-background hover:opacity-90"
           onClick={() => {
             if (validate()) {
+              const normalized = phone.replace(/\D/g, "");
+              setUserName(registeredUsers[normalized]?.name || "User");
               navigate("home");
               toast.success("Welcome back to WynPay! 🎉");
             }
@@ -462,7 +487,7 @@ function LoginScreen({
           <span className="text-muted-foreground text-sm">New to WynPay? </span>
           <button
             type="button"
-            onClick={() => navigate("signup-details")}
+            onClick={() => navigate("signup")}
             className="text-primary font-semibold text-sm hover:opacity-80"
             data-ocid="login.signup.link"
           >
@@ -474,31 +499,64 @@ function LoginScreen({
   );
 }
 
-// ─── Signup Details Screen ────────────────────────────────────────────────────
-function SignupDetailsScreen({
+// ─── Signup Screen ────────────────────────────────────────────────────────────
+function SignupScreen({
   name,
   setName,
   phone,
   setPhone,
+  password,
+  setPassword,
+  confirmPassword,
+  setConfirmPassword,
   errors,
   setErrors,
   navigate,
   setUserName,
+  saveUser,
+  registeredUsers,
 }: {
   name: string;
   setName: (v: string) => void;
   phone: string;
   setPhone: (v: string) => void;
+  password: string;
+  setPassword: (v: string) => void;
+  confirmPassword: string;
+  setConfirmPassword: (v: string) => void;
   errors: Record<string, string>;
   setErrors: (e: Record<string, string>) => void;
   navigate: (s: Screen) => void;
   setUserName: (v: string) => void;
+  saveUser: (phone: string, user: RegisteredUser) => void;
+  registeredUsers: UserStore;
 }) {
+  const handleCreate = () => {
+    const errs: Record<string, string> = {};
+    if (!name.trim()) errs.name = "Please enter your full name";
+    const normalized = phone.replace(/\D/g, "");
+    if (normalized.length < 10)
+      errs.phone = "Please enter a valid phone number";
+    else if (registeredUsers[normalized])
+      errs.phone = "This phone number is already registered. Please login.";
+    if (password.length < 8)
+      errs.password = "Password must be at least 8 characters";
+    if (password !== confirmPassword) errs.confirm = "Passwords do not match";
+    if (Object.keys(errs).length) {
+      setErrors(errs);
+      return;
+    }
+    saveUser(normalized, { name, password });
+    setUserName(name);
+    navigate("home");
+    toast.success(`Welcome to WynPay, ${name}! 🎉`);
+  };
+
   return (
     <ScreenWrapper>
       <AuthCard
         title="Create account"
-        subtitle="Join millions who trust WynPay"
+        subtitle="Join WynPay today"
         onBack={() => navigate("splash")}
       >
         <div className="space-y-2">
@@ -549,69 +607,6 @@ function SignupDetailsScreen({
             </p>
           )}
         </div>
-        <Button
-          className="w-full h-12 rounded-xl font-semibold gold-gradient text-background hover:opacity-90"
-          onClick={() => {
-            const errs: Record<string, string> = {};
-            if (!name.trim()) errs.name = "Please enter your full name";
-            if (phone.replace(/\D/g, "").length < 10)
-              errs.phone = "Please enter a valid phone number";
-            if (Object.keys(errs).length) {
-              setErrors(errs);
-              return;
-            }
-            setUserName(name);
-            navigate("signup-password");
-          }}
-          data-ocid="signup.next.button"
-        >
-          Next
-        </Button>
-        <div className="border-t border-border pt-4 text-center">
-          <span className="text-muted-foreground text-sm">
-            Already have an account?{" "}
-          </span>
-          <button
-            type="button"
-            onClick={() => navigate("login-phone")}
-            className="text-primary font-semibold text-sm hover:opacity-80"
-            data-ocid="signup.login.link"
-          >
-            Login
-          </button>
-        </div>
-      </AuthCard>
-    </ScreenWrapper>
-  );
-}
-
-// ─── Signup Password Screen ───────────────────────────────────────────────────
-function SignupPasswordScreen({
-  password,
-  setPassword,
-  confirmPassword,
-  setConfirmPassword,
-  errors,
-  setErrors,
-  navigate,
-  name,
-}: {
-  password: string;
-  setPassword: (v: string) => void;
-  confirmPassword: string;
-  setConfirmPassword: (v: string) => void;
-  errors: Record<string, string>;
-  setErrors: (e: Record<string, string>) => void;
-  navigate: (s: Screen) => void;
-  name: string;
-}) {
-  return (
-    <ScreenWrapper>
-      <AuthCard
-        title="Set your password"
-        subtitle="Create a strong password"
-        onBack={() => navigate("signup-details")}
-      >
         <PasswordField
           id="signup-password"
           label="Password"
@@ -638,6 +633,7 @@ function SignupPasswordScreen({
             setConfirmPassword(v);
             setErrors({});
           }}
+          placeholder="Re-enter your password"
         />
         {errors.confirm && (
           <p
@@ -649,23 +645,24 @@ function SignupPasswordScreen({
         )}
         <Button
           className="w-full h-12 rounded-xl font-semibold gold-gradient text-background hover:opacity-90"
-          onClick={() => {
-            const errs: Record<string, string> = {};
-            if (password.length < 8)
-              errs.password = "Password must be at least 8 characters";
-            if (password !== confirmPassword)
-              errs.confirm = "Passwords do not match";
-            if (Object.keys(errs).length) {
-              setErrors(errs);
-              return;
-            }
-            navigate("home");
-            toast.success(`Welcome to WynPay, ${name}! 🎉`);
-          }}
+          onClick={handleCreate}
           data-ocid="signup.create_account.button"
         >
           Create Account
         </Button>
+        <div className="border-t border-border pt-4 text-center">
+          <span className="text-muted-foreground text-sm">
+            Already have an account?{" "}
+          </span>
+          <button
+            type="button"
+            onClick={() => navigate("login-phone")}
+            className="text-primary font-semibold text-sm hover:opacity-80"
+            data-ocid="signup.login.link"
+          >
+            Login
+          </button>
+        </div>
       </AuthCard>
     </ScreenWrapper>
   );
@@ -678,12 +675,16 @@ function ForgotPhoneScreen({
   errors,
   setErrors,
   navigate,
+  setGeneratedOtp,
+  setForgotPhone,
 }: {
   phone: string;
   setPhone: (v: string) => void;
   errors: Record<string, string>;
   setErrors: (e: Record<string, string>) => void;
   navigate: (s: Screen) => void;
+  setGeneratedOtp: (otp: string) => void;
+  setForgotPhone: (phone: string) => void;
 }) {
   const validatePhone = () => {
     if (phone.replace(/\D/g, "").length < 10) {
@@ -727,12 +728,167 @@ function ForgotPhoneScreen({
         <Button
           className="w-full h-12 rounded-xl font-semibold gold-gradient text-background hover:opacity-90"
           onClick={() => {
-            if (validatePhone()) navigate("forgot-password");
+            if (validatePhone()) {
+              const otp = Math.floor(
+                100000 + Math.random() * 900000,
+              ).toString();
+              setGeneratedOtp(otp);
+              setForgotPhone(phone);
+              toast.success(
+                `SMS sent to ${phone}: Your verification code is ${otp}`,
+              );
+              navigate("forgot-otp");
+            }
           }}
           data-ocid="forgot.submit.button"
         >
-          Continue
+          Send Code
         </Button>
+      </AuthCard>
+    </ScreenWrapper>
+  );
+}
+
+// ─── Forgot OTP Screen ────────────────────────────────────────────────────────
+function ForgotOtpScreen({
+  phone,
+  otpInput,
+  setOtpInput,
+  generatedOtp,
+  errors,
+  setErrors,
+  navigate,
+  onResend,
+}: {
+  phone: string;
+  otpInput: string;
+  setOtpInput: (v: string) => void;
+  generatedOtp: string;
+  errors: Record<string, string>;
+  setErrors: (e: Record<string, string>) => void;
+  navigate: (s: Screen) => void;
+  onResend: () => void;
+}) {
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  const startCooldown = () => {
+    setResendCooldown(30);
+  };
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendCooldown]);
+
+  const maskedPhone = `+91 ******${phone.slice(-4)}`;
+
+  return (
+    <ScreenWrapper>
+      <AuthCard
+        title="Verify Phone"
+        subtitle={`Code sent to ${maskedPhone}`}
+        onBack={() => navigate("forgot-phone")}
+      >
+        <div className="flex flex-col items-center space-y-6">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+              <Smartphone className="text-primary" size={28} />
+            </div>
+            <p className="text-muted-foreground text-sm text-center">
+              Enter the 6-digit code we sent to
+              <br />
+              <span className="text-foreground font-semibold">
+                {maskedPhone}
+              </span>
+            </p>
+          </div>
+
+          <InputOTP
+            maxLength={6}
+            value={otpInput}
+            onChange={(v) => {
+              setOtpInput(v);
+              setErrors({});
+            }}
+            data-ocid="forgot.otp.input"
+          >
+            <InputOTPGroup className="gap-2">
+              <InputOTPSlot
+                index={0}
+                className="w-11 h-12 rounded-xl border-border bg-muted text-lg font-bold"
+              />
+              <InputOTPSlot
+                index={1}
+                className="w-11 h-12 rounded-xl border-border bg-muted text-lg font-bold"
+              />
+              <InputOTPSlot
+                index={2}
+                className="w-11 h-12 rounded-xl border-border bg-muted text-lg font-bold"
+              />
+              <InputOTPSlot
+                index={3}
+                className="w-11 h-12 rounded-xl border-border bg-muted text-lg font-bold"
+              />
+              <InputOTPSlot
+                index={4}
+                className="w-11 h-12 rounded-xl border-border bg-muted text-lg font-bold"
+              />
+              <InputOTPSlot
+                index={5}
+                className="w-11 h-12 rounded-xl border-border bg-muted text-lg font-bold"
+              />
+            </InputOTPGroup>
+          </InputOTP>
+
+          {errors.otp && (
+            <p
+              className="text-destructive text-sm text-center"
+              data-ocid="forgot.otp.error_state"
+            >
+              {errors.otp}
+            </p>
+          )}
+        </div>
+
+        <Button
+          className="w-full h-12 rounded-xl font-semibold gold-gradient text-background hover:opacity-90"
+          onClick={() => {
+            if (otpInput.length !== 6) {
+              setErrors({ otp: "Please enter the complete 6-digit code" });
+              return;
+            }
+            if (otpInput !== generatedOtp) {
+              setErrors({ otp: "Invalid code. Please try again." });
+              return;
+            }
+            navigate("forgot-password");
+          }}
+          data-ocid="forgot.otp.submit_button"
+        >
+          Verify Code
+        </Button>
+
+        <div className="text-center text-sm text-muted-foreground">
+          {"Didn't receive it? "}
+          {resendCooldown > 0 ? (
+            <span className="text-muted-foreground">
+              Resend in {resendCooldown}s
+            </span>
+          ) : (
+            <button
+              type="button"
+              className="text-primary font-semibold hover:opacity-80"
+              onClick={() => {
+                onResend();
+                startCooldown();
+              }}
+              data-ocid="forgot.otp.resend_button"
+            >
+              Resend Code
+            </button>
+          )}
+        </div>
       </AuthCard>
     </ScreenWrapper>
   );
@@ -747,6 +903,9 @@ function ForgotPasswordScreen({
   errors,
   setErrors,
   navigate,
+  forgotPhone,
+  registeredUsers,
+  saveUser,
 }: {
   password: string;
   setPassword: (v: string) => void;
@@ -755,13 +914,16 @@ function ForgotPasswordScreen({
   errors: Record<string, string>;
   setErrors: (e: Record<string, string>) => void;
   navigate: (s: Screen) => void;
+  forgotPhone: string;
+  registeredUsers: UserStore;
+  saveUser: (phone: string, user: RegisteredUser) => void;
 }) {
   return (
     <ScreenWrapper>
       <AuthCard
         title="New password"
         subtitle="Create a new password"
-        onBack={() => navigate("forgot-phone")}
+        onBack={() => navigate("forgot-otp")}
       >
         <PasswordField
           id="forgot-new-password"
@@ -809,6 +971,12 @@ function ForgotPasswordScreen({
             if (Object.keys(errs).length) {
               setErrors(errs);
               return;
+            }
+            // Update stored password for this phone number
+            const normalizedPhone = forgotPhone.replace(/\D/g, "");
+            const existingUser = registeredUsers[normalizedPhone];
+            if (existingUser) {
+              saveUser(forgotPhone, { ...existingUser, password });
             }
             navigate("login-phone");
             toast.success("Password reset successfully! Please login.");
@@ -2345,7 +2513,23 @@ export default function App() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [forgotOtpInput, setForgotOtpInput] = useState("");
+  const [generatedOtp, setGeneratedOtp] = useState("");
+  const [forgotPhone, setForgotPhone] = useState("");
   const [userName, setUserName] = useState("Alex Johnson");
+  const [registeredUsers, setRegisteredUsers] = useState<UserStore>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("wynpay_users") || "{}");
+    } catch {
+      return {};
+    }
+  });
+
+  const saveUser = (phone: string, user: RegisteredUser) => {
+    const updated = { ...registeredUsers, [phone.replace(/\D/g, "")]: user };
+    setRegisteredUsers(updated);
+    localStorage.setItem("wynpay_users", JSON.stringify(updated));
+  };
 
   const [buyQuantity, setBuyQuantity] = useState(0);
   const [buyAmount, setBuyAmount] = useState(0);
@@ -2389,25 +2573,17 @@ export default function App() {
             errors={errors}
             setErrors={setErrors}
             navigate={navigate}
+            registeredUsers={registeredUsers}
+            setUserName={setUserName}
           />
         )}
-        {screen === "signup-details" && (
-          <SignupDetailsScreen
-            key="signup-details"
+        {screen === "signup" && (
+          <SignupScreen
+            key="signup"
             name={name}
             setName={setName}
             phone={phone}
             setPhone={setPhone}
-            errors={errors}
-            setErrors={setErrors}
-            navigate={navigate}
-            setUserName={setUserName}
-          />
-        )}
-
-        {screen === "signup-password" && (
-          <SignupPasswordScreen
-            key="signup-password"
             password={password}
             setPassword={setPassword}
             confirmPassword={confirmPassword}
@@ -2415,7 +2591,9 @@ export default function App() {
             errors={errors}
             setErrors={setErrors}
             navigate={navigate}
-            name={name}
+            setUserName={setUserName}
+            saveUser={saveUser}
+            registeredUsers={registeredUsers}
           />
         )}
         {screen === "forgot-phone" && (
@@ -2426,6 +2604,29 @@ export default function App() {
             errors={errors}
             setErrors={setErrors}
             navigate={navigate}
+            setGeneratedOtp={setGeneratedOtp}
+            setForgotPhone={setForgotPhone}
+          />
+        )}
+        {screen === "forgot-otp" && (
+          <ForgotOtpScreen
+            key="forgot-otp"
+            phone={forgotPhone}
+            otpInput={forgotOtpInput}
+            setOtpInput={setForgotOtpInput}
+            generatedOtp={generatedOtp}
+            errors={errors}
+            setErrors={setErrors}
+            navigate={navigate}
+            onResend={() => {
+              const otp = Math.floor(
+                100000 + Math.random() * 900000,
+              ).toString();
+              setGeneratedOtp(otp);
+              toast.success(
+                `SMS resent to ${forgotPhone}: Your code is ${otp}`,
+              );
+            }}
           />
         )}
         {screen === "forgot-password" && (
@@ -2438,6 +2639,9 @@ export default function App() {
             errors={errors}
             setErrors={setErrors}
             navigate={navigate}
+            forgotPhone={forgotPhone}
+            registeredUsers={registeredUsers}
+            saveUser={saveUser}
           />
         )}
         {screen === "home" && (
