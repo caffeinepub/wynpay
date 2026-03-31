@@ -13,7 +13,6 @@ import {
   CheckCircle,
   ChevronDown,
   ChevronRight,
-  ChevronUp,
   Copy,
   Eye,
   EyeOff,
@@ -21,7 +20,6 @@ import {
   Grid2x2,
   Headphones,
   HelpCircle,
-  History,
   Home,
   Loader2,
   Lock,
@@ -29,7 +27,6 @@ import {
   Plus,
   RefreshCw,
   Send,
-  Shield,
   ShoppingCart,
   Smartphone,
   Trash2,
@@ -41,7 +38,6 @@ import {
   Zap,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -60,12 +56,7 @@ type Screen =
   | "sell-rp"
   | "mine"
   | "buy-rp-record"
-  | "sell-rp-record"
-  | "team-management"
-  | "account-security"
-  | "common-problem"
-  | "bind-payment"
-  | "balance-history";
+  | "sell-rp-record";
 
 // ─── UPI Wallet Types ────────────────────────────────────────────────────────
 type UpiWalletType = "PhonePe" | "Paytm" | "MobiKwik" | "FreeCharge";
@@ -85,17 +76,17 @@ interface SellTransaction {
 type RegisteredUser = { name: string; password: string; inviteCode?: string };
 type UserStore = Record<string, RegisteredUser>; // phone → user
 
-const _WALLET_COLORS: Record<UpiWalletType, string> = {
+const WALLET_COLORS: Record<UpiWalletType, string> = {
   PhonePe: "#5f259f",
   Paytm: "#00b9f1",
   MobiKwik: "#e40046",
   FreeCharge: "#f26522",
 };
-const WALLET_LOGOS: Record<UpiWalletType, string> = {
-  PhonePe: "/assets/generated/phonepe-logo-transparent.dim_100x100.png",
-  Paytm: "/assets/generated/paytm-logo-transparent.dim_100x100.png",
-  MobiKwik: "/assets/generated/mobikwik-logo-transparent.dim_100x100.png",
-  FreeCharge: "/assets/generated/freecharge-logo-transparent.dim_100x100.png",
+const WALLET_EMOJIS: Record<UpiWalletType, string> = {
+  PhonePe: "📱",
+  Paytm: "💳",
+  MobiKwik: "📲",
+  FreeCharge: "⚡",
 };
 
 const _LEVELS = [
@@ -1121,10 +1112,6 @@ function HomeScreen({
                   type="button"
                   className="mt-2 px-4 py-1.5 bg-white/25 hover:bg-white/35 text-white text-xs font-bold rounded-full transition-colors"
                   data-ocid="home.banner.button"
-                  onClick={() => {
-                    if (bannerIndex === 0) navigate("team-management");
-                    if (bannerIndex === 1) navigate("buy-rp");
-                  }}
                 >
                   {banners[bannerIndex].btn}
                 </button>
@@ -1429,108 +1416,6 @@ function NewcomerBonusScreen({
       </div>
 
       <main className="flex-1 px-4 py-6 space-y-5">
-        {/* Task Introduction Card */}
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
-          <div className="p-4">
-            <h3 className="text-lg font-black text-gray-800 mb-3">
-              1. Task Introduction
-            </h3>
-            <div className="flex gap-3">
-              {/* Phone mockup illustration */}
-              <div className="w-28 flex-shrink-0 bg-gray-800 rounded-2xl p-1.5 shadow-md">
-                <div className="bg-blue-600 rounded-xl p-2 h-full min-h-[100px]">
-                  <div className="flex gap-1 mb-1.5">
-                    {["L1", "L2", "L3", "L4", "L5", "L6"].map((l) => (
-                      <span
-                        key={l}
-                        className="text-[6px] bg-blue-400 text-white rounded px-0.5 font-bold"
-                      >
-                        {l}
-                      </span>
-                    ))}
-                  </div>
-                  {[1, 2, 3].map((i) => (
-                    <div
-                      key={i}
-                      className="bg-white rounded mb-1 p-1 flex justify-between items-center"
-                    >
-                      <span className="text-[5px] text-gray-600">
-                        Payment: 100.0RP
-                      </span>
-                      <span className="text-[5px] bg-blue-500 text-white rounded px-0.5">
-                        Receive
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              {/* Callout text */}
-              <div className="flex-1 bg-blue-50 rounded-xl p-3 border border-blue-100 relative">
-                <p className="text-xs text-gray-700 leading-relaxed">
-                  You can purchase orders of different levels. After receiving
-                  the order, it must be completed within the specified time,
-                  otherwise the order will be automatically cancelled.
-                </p>
-                {/* Arrow */}
-                <div className="absolute -left-2.5 top-1/2 -translate-y-1/2 w-0 h-0 border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent border-r-[10px] border-r-blue-100" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* About the Team Card */}
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
-          <div className="p-4">
-            <h3 className="text-lg font-black text-gray-800 mb-3">
-              3. About the Team
-            </h3>
-            <div className="flex gap-3">
-              {/* Phone mockup illustration */}
-              <div className="w-28 flex-shrink-0 bg-gray-800 rounded-2xl p-1.5 shadow-md">
-                <div className="bg-blue-600 rounded-xl p-2 h-full min-h-[100px]">
-                  <div className="bg-white/20 rounded p-1 mb-1.5">
-                    <p className="text-[5px] text-white font-bold">
-                      My total commission
-                    </p>
-                    <p className="text-[8px] text-white font-black">81.18</p>
-                  </div>
-                  <div className="bg-white rounded p-1 mb-1">
-                    <p className="text-[5px] text-gray-500 mb-0.5">
-                      Invite Link
-                    </p>
-                    <div className="bg-gray-100 rounded px-1 py-0.5 flex justify-between">
-                      <span className="text-[4px] text-gray-600">
-                        https://wynpay...
-                      </span>
-                    </div>
-                  </div>
-                  <div className="bg-white rounded p-1">
-                    <div className="grid grid-cols-4 gap-0.5">
-                      {["Tg", "Fb", "Wa", "QR"].map((i) => (
-                        <div
-                          key={i}
-                          className="w-3 h-3 rounded-full bg-teal-400 flex items-center justify-center"
-                        >
-                          <span className="text-[4px] text-white">{i[0]}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              {/* Callout text */}
-              <div className="flex-1 bg-blue-50 rounded-xl p-3 border border-blue-100 relative">
-                <p className="text-xs text-gray-700 leading-relaxed">
-                  Share the invitation code and invite friends to join your
-                  team. After your team members complete the order, you will
-                  receive a certain percentage of the rebate.
-                </p>
-                <div className="absolute -left-2.5 top-1/2 -translate-y-1/2 w-0 h-0 border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent border-r-[10px] border-r-blue-100" />
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl p-6 text-white text-center">
           <div className="text-5xl mb-3">🎁</div>
           <h2 className="text-2xl font-black">400 Tokens</h2>
@@ -2084,10 +1969,10 @@ interface RandomSellOrder {
 
 function SellRPRecordScreen({
   navigate,
-  currentBalance,
+  rpCoins,
 }: {
   navigate: (s: Screen) => void;
-  currentBalance: number;
+  rpCoins: number;
 }) {
   const tabs = [
     "Unknown order",
@@ -2097,15 +1982,22 @@ function SellRPRecordScreen({
     "Success",
   ];
   const [activeTab, setActiveTab] = useState(0);
+  const [now, setNow] = useState(Date.now());
   const [randomOrders, setRandomOrders] = useState<RandomSellOrder[]>(() => [
     {
       id: `order-${Date.now()}`,
-      amount: Math.max(100, currentBalance),
+      amount: [100, 200, 300, 500, 1000, 2000][Math.floor(Math.random() * 6)],
       createdAt: Date.now(),
       accepted: false,
     },
   ]);
   const [acceptedOrders, setAcceptedOrders] = useState<RandomSellOrder[]>([]);
+
+  // Tick every second to update countdowns
+  useEffect(() => {
+    const tick = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(tick);
+  }, []);
 
   // Remove expired orders every second
   useEffect(() => {
@@ -2119,25 +2011,36 @@ function SellRPRecordScreen({
 
   // Add a new random order every 2 minutes
   useEffect(() => {
+    const amounts = [100, 200, 300, 500, 1000, 2000];
     const generator = setInterval(() => {
       setRandomOrders((prev) => [
         ...prev,
         {
           id: `order-${Date.now()}`,
-          amount: Math.max(100, currentBalance),
+          amount: amounts[Math.floor(Math.random() * amounts.length)],
           createdAt: Date.now(),
           accepted: false,
         },
       ]);
     }, 120000);
     return () => clearInterval(generator);
-  }, [currentBalance]);
+  }, []);
 
   const handleAccept = (order: RandomSellOrder) => {
-    if (currentBalance < 100) return;
+    if (rpCoins < 100) return;
     setRandomOrders((prev) => prev.filter((o) => o.id !== order.id));
     setAcceptedOrders((prev) => [...prev, { ...order, accepted: true }]);
     toast.success("Order accepted! 🎉");
+  };
+
+  const formatCountdown = (createdAt: number) => {
+    const elapsed = Math.floor((now - createdAt) / 1000);
+    const remaining = Math.max(0, 120 - elapsed);
+    const mm = Math.floor(remaining / 60)
+      .toString()
+      .padStart(2, "0");
+    const ss = (remaining % 60).toString().padStart(2, "0");
+    return `${mm}:${ss}`;
   };
 
   const activeOrders = randomOrders.filter((o) => !o.accepted);
@@ -2196,7 +2099,8 @@ function SellRPRecordScreen({
             <ClipboardEmptyState />
           ) : (
             activeOrders.map((order, idx) => {
-              const canAccept = currentBalance >= 100;
+              const countdown = formatCountdown(order.createdAt);
+              const canAccept = rpCoins >= 100;
               return (
                 <div
                   key={order.id}
@@ -2213,6 +2117,9 @@ function SellRPRecordScreen({
                       </p>
                     </div>
                     <div className="flex flex-col items-end gap-2">
+                      <span className="text-sm font-bold text-orange-500">
+                        {countdown}
+                      </span>
                       <button
                         type="button"
                         data-ocid={`sell_rp_record.accept.button.${idx + 1}`}
@@ -2622,12 +2529,11 @@ function SellRPScreen({
                   data-ocid={`sell_rp.wallet.item.${idx + 1}`}
                   className="bg-white rounded-2xl shadow-sm px-4 py-3 flex items-center gap-3"
                 >
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0">
-                    <img
-                      src={WALLET_LOGOS[wallet.name]}
-                      alt={wallet.name}
-                      className="w-10 h-10 object-cover rounded-xl"
-                    />
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-lg font-bold flex-shrink-0"
+                    style={{ backgroundColor: WALLET_COLORS[wallet.name] }}
+                  >
+                    {WALLET_EMOJIS[wallet.name]}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-gray-800 text-sm">
@@ -2720,12 +2626,11 @@ function SellRPScreen({
                       : "border-gray-200 bg-white"
                   }`}
                 >
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
-                    <img
-                      src={WALLET_LOGOS[wt]}
-                      alt={wt}
-                      className="w-8 h-8 object-cover rounded-lg"
-                    />
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0"
+                    style={{ backgroundColor: WALLET_COLORS[wt] }}
+                  >
+                    {WALLET_EMOJIS[wt]}
                   </div>
                   <span className="text-sm font-bold text-gray-700">{wt}</span>
                 </button>
@@ -2777,339 +2682,6 @@ function SellRPScreen({
   );
 }
 
-function TeamManagementScreen({
-  inviteCode,
-  navigate,
-}: {
-  inviteCode: string;
-  navigate: (s: Screen) => void;
-}) {
-  const [linkCopied, setLinkCopied] = useState(false);
-  const inviteLink = `https://wynpay-wxx.caffeine.xyz/?inviteCode=${inviteCode}`;
-
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(inviteLink).catch(() => {});
-    setLinkCopied(true);
-    setTimeout(() => setLinkCopied(false), 2000);
-    toast.success("Invite link copied!");
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="min-h-screen flex flex-col max-w-[430px] mx-auto bg-gray-100"
-    >
-      {/* Header */}
-      <div className="px-4 pt-10 pb-4 bg-white shadow-sm flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => navigate("mine")}
-          className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
-          data-ocid="team.back.button"
-        >
-          <ArrowLeft size={16} className="text-gray-600" />
-        </button>
-        <h1 className="font-bold text-gray-800 text-lg">Team management</h1>
-      </div>
-
-      <div className="flex-1 overflow-y-auto pb-8 space-y-3 pt-3 px-3">
-        {/* Yesterday's Rebates - Blue Card */}
-        <div className="bg-blue-600 rounded-2xl p-4 relative overflow-hidden">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-white font-bold text-base mb-3">
-                Yesterday's Rebates
-              </p>
-              <div className="flex gap-8">
-                <div>
-                  <p className="text-blue-200 text-xs">Top Up</p>
-                  <p className="text-white font-bold text-lg">0.0</p>
-                </div>
-                <div>
-                  <p className="text-blue-200 text-xs flex items-center gap-1">
-                    Purchase <Lock size={12} className="text-blue-300" />
-                  </p>
-                  <p className="text-white font-bold text-lg">0.0</p>
-                </div>
-              </div>
-            </div>
-            {/* Calendar widget */}
-            <div className="bg-white rounded-xl p-3 text-center shadow-md min-w-[90px]">
-              <div className="flex justify-center gap-3 mb-1">
-                <div className="w-1 h-4 bg-orange-400 rounded-full" />
-                <div className="w-1 h-4 bg-orange-400 rounded-full" />
-              </div>
-              <p className="text-gray-500 text-xs">Team Members</p>
-              <p className="text-gray-800 font-black text-2xl">3</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Today's Rebates */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <p className="font-bold text-gray-800 text-base mb-3">
-            Today's Rebates
-          </p>
-          <div className="flex gap-8">
-            <div>
-              <p className="text-gray-500 text-xs">Top Up</p>
-              <p className="text-gray-800 font-bold text-base">0.0</p>
-            </div>
-            <div>
-              <p className="text-gray-500 text-xs">Purchase</p>
-              <p className="text-gray-800 font-bold text-base">0.0</p>
-            </div>
-            <div>
-              <p className="text-gray-500 text-xs">Team Additions</p>
-              <p className="text-gray-800 font-bold text-base">0</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Invite Link */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <p className="font-bold text-gray-800 text-base mb-3">Invite Link</p>
-          <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-3 py-2.5 border border-gray-200">
-            <span className="flex-1 text-xs text-gray-600 truncate">
-              {inviteLink}
-            </span>
-            <button
-              type="button"
-              onClick={handleCopyLink}
-              className="text-gray-500 hover:text-gray-700 flex-shrink-0"
-            >
-              {linkCopied ? (
-                <span className="text-[11px] text-green-600 font-bold">✓</span>
-              ) : (
-                <Copy size={16} />
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* More ways */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <p className="font-bold text-gray-800 text-base mb-4">More ways</p>
-          <div className="flex justify-around">
-            {/* Telegram */}
-            <button
-              type="button"
-              onClick={() =>
-                window.open("https://t.me/wynpayofficls", "_blank")
-              }
-              className="flex flex-col items-center gap-1"
-            >
-              <div className="w-12 h-12 rounded-full bg-[#29b5e8] flex items-center justify-center shadow-sm">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="white"
-                  className="w-7 h-7"
-                  role="img"
-                  aria-label="Telegram"
-                >
-                  <title>Telegram</title>
-                  <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.869 4.326-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.83.94z" />
-                </svg>
-              </div>
-              <span className="text-xs text-gray-500">Telegram</span>
-            </button>
-            {/* Facebook */}
-            <button
-              type="button"
-              onClick={() => window.open("https://facebook.com", "_blank")}
-              className="flex flex-col items-center gap-1"
-            >
-              <div className="w-12 h-12 rounded-full bg-[#1877f2] flex items-center justify-center shadow-sm">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="white"
-                  className="w-7 h-7"
-                  role="img"
-                  aria-label="Facebook"
-                >
-                  <title>Facebook</title>
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                </svg>
-              </div>
-              <span className="text-xs text-gray-500">FaceBook</span>
-            </button>
-            {/* WhatsApp */}
-            <button
-              type="button"
-              onClick={() => window.open("https://whatsapp.com", "_blank")}
-              className="flex flex-col items-center gap-1"
-            >
-              <div className="w-12 h-12 rounded-full bg-[#25d366] flex items-center justify-center shadow-sm">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="white"
-                  className="w-7 h-7"
-                  role="img"
-                  aria-label="WhatsApp"
-                >
-                  <title>WhatsApp</title>
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                </svg>
-              </div>
-              <span className="text-xs text-gray-500">WhatsApp</span>
-            </button>
-            {/* QR Code */}
-            <button
-              type="button"
-              onClick={() => toast.info("QR Code feature coming soon!")}
-              className="flex flex-col items-center gap-1"
-            >
-              <div className="w-12 h-12 rounded-full bg-[#3b5998] flex items-center justify-center shadow-sm">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="white"
-                  className="w-6 h-6"
-                  role="img"
-                  aria-label="QR Code"
-                >
-                  <title>QR Code</title>
-                  <path d="M3 3h6v6H3V3zm2 2v2h2V5H5zm8-2h6v6h-6V3zm2 2v2h2V5h-2zM3 13h6v6H3v-6zm2 2v2h2v-2H5zm13-2h1v1h-1v-1zm-5 0h1v1h-1v-1zm2 2h1v1h-1v-1zm2 0h1v1h-1v-1zm-4 2h1v1h-1v-1zm2 0h1v1h-1v-1zm2 0h1v1h-1v-1zm0 2h1v1h-1v-1zm-4 0h1v1h-1v-1z" />
-                </svg>
-              </div>
-              <span className="text-xs text-gray-500">QR code</span>
-            </button>
-            {/* Share */}
-            <button
-              type="button"
-              onClick={() => {
-                if (navigator.share) {
-                  navigator
-                    .share({ url: inviteLink, title: "Join WynPay" })
-                    .catch(() => {});
-                } else {
-                  handleCopyLink();
-                }
-              }}
-              className="flex flex-col items-center gap-1"
-            >
-              <div className="w-12 h-12 rounded-full bg-[#e53e3e] flex items-center justify-center shadow-sm">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="white"
-                  className="w-6 h-6"
-                  role="img"
-                  aria-label="Share"
-                >
-                  <title>Share</title>
-                  <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z" />
-                </svg>
-              </div>
-              <span className="text-xs text-gray-500">Share</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Purchase Reward Table */}
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          <div className="px-4 py-3 flex items-center justify-between border-b border-gray-100">
-            <p className="font-bold text-gray-800 text-base">Purchase Reward</p>
-            <button
-              type="button"
-              className="text-xs text-gray-400 flex items-center gap-0.5"
-            >
-              Detail <ChevronRight size={13} />
-            </button>
-          </div>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-teal-500 text-white">
-                <th className="py-2.5 px-4 text-center font-semibold">Type</th>
-                <th className="py-2.5 px-4 text-center font-semibold">
-                  Profit‰
-                </th>
-                <th className="py-2.5 px-4 text-center font-semibold">Scale</th>
-                <th className="py-2.5 px-4 text-center font-semibold">DAU</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                { type: 1, profit: "3.0", scale: 2, dau: 0 },
-                { type: 2, profit: "2.0", scale: 1, dau: 0 },
-                { type: 3, profit: "1.0", scale: 0, dau: 0 },
-              ].map((row, i) => (
-                <tr
-                  key={row.type}
-                  className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}
-                >
-                  <td className="py-3 px-4 text-center text-gray-700">
-                    {row.type}
-                  </td>
-                  <td className="py-3 px-4 text-center text-gray-700">
-                    {row.profit}
-                  </td>
-                  <td className="py-3 px-4 text-center text-gray-700">
-                    {row.scale}
-                  </td>
-                  <td className="py-3 px-4 text-center text-gray-700">
-                    {row.dau}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Top Up Reward Table */}
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          <div className="px-4 py-3 flex items-center justify-between border-b border-gray-100">
-            <p className="font-bold text-gray-800 text-base">Top Up Reward</p>
-            <button
-              type="button"
-              className="text-xs text-gray-400 flex items-center gap-0.5"
-            >
-              Detail <ChevronRight size={13} />
-            </button>
-          </div>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-teal-500 text-white">
-                <th className="py-2.5 px-4 text-center font-semibold">Type</th>
-                <th className="py-2.5 px-4 text-center font-semibold">
-                  Profit‰
-                </th>
-                <th className="py-2.5 px-4 text-center font-semibold">Scale</th>
-                <th className="py-2.5 px-4 text-center font-semibold">DAU</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                { type: 1, profit: "3.0", scale: 1, dau: 0 },
-                { type: 2, profit: "2.0", scale: 0, dau: 0 },
-                { type: 3, profit: "1.0", scale: 0, dau: 0 },
-              ].map((row, i) => (
-                <tr
-                  key={row.type}
-                  className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}
-                >
-                  <td className="py-3 px-4 text-center text-gray-700">
-                    {row.type}
-                  </td>
-                  <td className="py-3 px-4 text-center text-gray-700">
-                    {row.profit}
-                  </td>
-                  <td className="py-3 px-4 text-center text-gray-700">
-                    {row.scale}
-                  </td>
-                  <td className="py-3 px-4 text-center text-gray-700">
-                    {row.dau}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
 // ─── Mine / Profile Screen ────────────────────────────────────────────────────
 function MineScreen({
   buyAmount,
@@ -3118,8 +2690,6 @@ function MineScreen({
   inviteCode,
   navigate,
   onLogout,
-  upiWallets: _upiWallets,
-  setUpiWallets: _setUpiWallets,
 }: {
   buyAmount: number;
   rpCoins: number;
@@ -3127,8 +2697,6 @@ function MineScreen({
   inviteCode: string;
   navigate: (s: Screen) => void;
   onLogout: () => void;
-  upiWallets: UpiWallet[];
-  setUpiWallets: React.Dispatch<React.SetStateAction<UpiWallet[]>>;
 }) {
   const [copied, setCopied] = useState(false);
   const currentBalance = buyAmount + rpCoins;
@@ -3140,40 +2708,30 @@ function MineScreen({
     toast.success("Invite code copied!");
   };
 
-  const menuItems: {
-    icon: React.ReactNode;
-    label: string;
-    onClick?: () => void;
-  }[] = [
+  const menuItems = [
     {
       icon: <Gift size={18} className="text-amber-500" />,
       label: "Newbie Rewards",
-      onClick: () => navigate("newcomer-bonus"),
     },
     {
       icon: <Grid2x2 size={18} className="text-teal-600" />,
       label: "Bind Payment App",
-      onClick: () => navigate("bind-payment"),
     },
     {
       icon: <HelpCircle size={18} className="text-blue-500" />,
       label: "Common Problem",
-      onClick: () => navigate("common-problem"),
     },
     {
       icon: <Headphones size={18} className="text-purple-500" />,
       label: "Online Service",
-      onClick: () => window.open("https://t.me/wynpayservice", "_blank"),
     },
     {
       icon: <Lock size={18} className="text-gray-500" />,
       label: "Account Security",
-      onClick: () => navigate("account-security"),
     },
     {
       icon: <Send size={18} className="text-teal-500" />,
       label: "Official Channel",
-      onClick: () => window.open("https://t.me/wynpayofficls", "_blank"),
     },
     {
       icon: <Users size={18} className="text-amber-600" />,
@@ -3233,11 +2791,9 @@ function MineScreen({
 
       <div className="flex-1 overflow-y-auto pb-24 space-y-3 pt-3 px-3">
         {/* Current Balance Card */}
-        <button
-          type="button"
-          onClick={() => navigate("balance-history")}
-          className="w-full bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between hover:bg-gray-50 transition-colors"
-          data-ocid="mine.balance.tap"
+        <div
+          className="bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between"
+          data-ocid="mine.balance.card"
         >
           <div>
             <p className="text-xs text-gray-500 font-medium mb-1">
@@ -3269,7 +2825,7 @@ function MineScreen({
             </div>
             <ChevronRight size={18} className="text-gray-400" />
           </div>
-        </button>
+        </div>
 
         {/* My Team Card */}
         <div
@@ -3286,7 +2842,6 @@ function MineScreen({
               </p>
               <button
                 type="button"
-                onClick={() => navigate("team-management")}
                 data-ocid="mine.team.button"
                 className="mt-2 text-amber-300 text-xs font-bold flex items-center gap-0.5 hover:text-amber-200 transition-colors"
               >
@@ -3308,7 +2863,6 @@ function MineScreen({
             <div key={item.label}>
               <button
                 type="button"
-                onClick={item.onClick}
                 data-ocid={`mine.menu.item.${idx + 1}`}
                 className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition-colors"
               >
@@ -3359,667 +2913,6 @@ function MineScreen({
   );
 }
 
-// ─── AccountSecurityScreen ───────────────────────────────────────────────────
-function AccountSecurityScreen({
-  navigate,
-  phone,
-  registeredUsers,
-  saveUser,
-}: {
-  navigate: (s: Screen) => void;
-  phone: string;
-  registeredUsers: UserStore;
-  saveUser: (phone: string, user: RegisteredUser) => void;
-}) {
-  const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [otp, setOtp] = useState("");
-  const [generatedOtp, setGeneratedOtp] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showNew, setShowNew] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [error, setError] = useState("");
-
-  const sendCode = () => {
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    setGeneratedOtp(code);
-    toast.success(`Your verification code: ${code}`);
-    setStep(2);
-  };
-
-  const verifyCode = () => {
-    if (otp === generatedOtp) {
-      setError("");
-      setStep(3);
-    } else {
-      setError("Invalid code. Please try again.");
-    }
-  };
-
-  const changePassword = () => {
-    if (newPassword.length < 6) {
-      setError("Password must be at least 6 characters.");
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-    const normalized = phone.replace(/\D/g, "");
-    const existing = registeredUsers[normalized];
-    if (existing) {
-      saveUser(normalized, { ...existing, password: newPassword });
-    }
-    toast.success("Password changed successfully!");
-    navigate("mine");
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="min-h-screen flex flex-col max-w-[430px] mx-auto bg-gray-100"
-    >
-      <header className="px-4 pt-10 pb-4 bg-gradient-to-r from-gray-900 to-teal-900 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => navigate("mine")}
-          className="text-white p-1"
-        >
-          <ArrowLeft size={22} />
-        </button>
-        <div className="flex items-center gap-2">
-          <Shield size={20} className="text-amber-400" />
-          <h1 className="text-white font-bold text-lg">Account Security</h1>
-        </div>
-      </header>
-
-      <div className="flex-1 p-4 space-y-4">
-        {/* Step indicators */}
-        <div className="flex items-center gap-2 justify-center py-2">
-          {[1, 2, 3].map((s) => (
-            <div key={s} className="flex items-center gap-2">
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step >= s ? "bg-teal-600 text-white" : "bg-gray-300 text-gray-500"}`}
-              >
-                {s}
-              </div>
-              {s < 3 && (
-                <div
-                  className={`w-10 h-1 rounded ${step > s ? "bg-teal-600" : "bg-gray-300"}`}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-
-        {step === 1 && (
-          <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
-            <h2 className="font-bold text-gray-800 text-base">
-              Verify Your Mobile Number
-            </h2>
-            <div>
-              <p className="text-xs text-gray-500 font-medium">
-                Registered Mobile Number
-              </p>
-              <div className="mt-1 px-4 py-3 bg-gray-100 rounded-xl text-gray-700 font-semibold">
-                +91 {phone || "XXXXXXXXXX"}
-              </div>
-            </div>
-            <Button
-              onClick={sendCode}
-              className="w-full h-12 rounded-xl font-bold text-white"
-              style={{
-                background: "linear-gradient(135deg, #14b8a6, #0d9488)",
-              }}
-              data-ocid="account_security.send_code.button"
-            >
-              Send Verification Code
-            </Button>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
-            <h2 className="font-bold text-gray-800 text-base">
-              Enter Verification Code
-            </h2>
-            <p className="text-xs text-gray-500">Code sent to +91 {phone}</p>
-            <div className="flex justify-center">
-              <InputOTP maxLength={6} value={otp} onChange={setOtp}>
-                <InputOTPGroup>
-                  {[0, 1, 2, 3, 4, 5].map((i) => (
-                    <InputOTPSlot key={i} index={i} />
-                  ))}
-                </InputOTPGroup>
-              </InputOTP>
-            </div>
-            {error && (
-              <p className="text-red-500 text-xs text-center">{error}</p>
-            )}
-            <Button
-              onClick={verifyCode}
-              className="w-full h-12 rounded-xl font-bold text-white"
-              style={{
-                background: "linear-gradient(135deg, #14b8a6, #0d9488)",
-              }}
-              data-ocid="account_security.verify.button"
-            >
-              Verify Code
-            </Button>
-          </div>
-        )}
-
-        {step === 3 && (
-          <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
-            <h2 className="font-bold text-gray-800 text-base">
-              Set New Password
-            </h2>
-            <div className="space-y-3">
-              <div className="relative">
-                <p className="text-xs text-gray-500 font-medium">
-                  New Password
-                </p>
-                <div className="relative mt-1">
-                  <Input
-                    type={showNew ? "text" : "password"}
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Enter new password"
-                    className="h-12 rounded-xl pr-10"
-                    data-ocid="account_security.new_password.input"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNew(!showNew)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-                  >
-                    {showNew ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-              </div>
-              <div className="relative">
-                <p className="text-xs text-gray-500 font-medium">
-                  Confirm New Password
-                </p>
-                <div className="relative mt-1">
-                  <Input
-                    type={showConfirm ? "text" : "password"}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm new password"
-                    className="h-12 rounded-xl pr-10"
-                    data-ocid="account_security.confirm_password.input"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirm(!showConfirm)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-                  >
-                    {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-              </div>
-            </div>
-            {error && (
-              <p className="text-red-500 text-xs text-center">{error}</p>
-            )}
-            <Button
-              onClick={changePassword}
-              className="w-full h-12 rounded-xl font-bold text-white"
-              style={{
-                background: "linear-gradient(135deg, #14b8a6, #0d9488)",
-              }}
-              data-ocid="account_security.change_password.button"
-            >
-              Change Password
-            </Button>
-          </div>
-        )}
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── CommonProblemScreen ──────────────────────────────────────────────────────
-function CommonProblemScreen({ navigate }: { navigate: (s: Screen) => void }) {
-  const faqs = [
-    {
-      q: "How to recover an invalid wallet?",
-      a: "You can log out of your wallet account and log back in.",
-    },
-    {
-      q: "Get a higher withdrawal limit?",
-      a: "Please complete KYC verification. After completing KYC, you will be prompted for your daily/monthly transaction limit.",
-    },
-    {
-      q: "About Mobikwik Payment Issues",
-      a: "Due to an official issue with Mobikwik, some users may have their payments automatically returned when purchasing tasks.\n\nPlease note:\n• Please do not attempt to pay again due to payment failures.\n• If a payment fails, please skip the failed order and proceed directly to the next one.",
-    },
-  ];
-  const [open, setOpen] = useState<number[]>([0, 1, 2]);
-
-  const toggle = (idx: number) => {
-    setOpen((prev) =>
-      prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx],
-    );
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="min-h-screen flex flex-col max-w-[430px] mx-auto bg-gray-100"
-    >
-      <header className="px-4 pt-10 pb-4 bg-gradient-to-r from-gray-900 to-teal-900 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => navigate("mine")}
-          className="text-white p-1"
-        >
-          <ArrowLeft size={22} />
-        </button>
-        <div className="flex items-center gap-2">
-          <HelpCircle size={20} className="text-amber-400" />
-          <h1 className="text-white font-bold text-lg">Frequently Questions</h1>
-        </div>
-      </header>
-
-      <div className="flex-1 p-4 space-y-3">
-        {faqs.map((faq) => (
-          <div
-            key={faq.q}
-            className="bg-white rounded-2xl shadow-sm overflow-hidden"
-            data-ocid={`faq.item.${faqs.indexOf(faq) + 1}`}
-          >
-            <button
-              type="button"
-              onClick={() => toggle(faqs.indexOf(faq))}
-              className="w-full flex items-center justify-between px-4 py-4"
-            >
-              <span className="text-sm font-semibold text-gray-800 text-left flex-1 pr-2">
-                {faq.q}
-              </span>
-              {open.includes(faqs.indexOf(faq)) ? (
-                <ChevronUp size={18} className="text-green-600 flex-shrink-0" />
-              ) : (
-                <ChevronDown
-                  size={18}
-                  className="text-green-600 flex-shrink-0"
-                />
-              )}
-            </button>
-            {open.includes(faqs.indexOf(faq)) && (
-              <div className="px-4 pb-4">
-                <div className="bg-gray-100 rounded-xl p-3">
-                  {faq.a.split("\n").map((line, li) => (
-                    <p
-                      key={line}
-                      className={`text-xs text-gray-600 leading-relaxed ${li > 0 ? "mt-1" : ""}`}
-                    >
-                      {line}
-                    </p>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── BindPaymentScreen ────────────────────────────────────────────────────────
-function BindPaymentScreen({
-  navigate,
-  upiWallets,
-  setUpiWallets,
-}: {
-  navigate: (s: Screen) => void;
-  upiWallets: UpiWallet[];
-  setUpiWallets: React.Dispatch<React.SetStateAction<UpiWallet[]>>;
-}) {
-  const providers: UpiWalletType[] = [
-    "PhonePe",
-    "Paytm",
-    "MobiKwik",
-    "FreeCharge",
-  ];
-  const [addingFor, setAddingFor] = useState<UpiWalletType | null>(null);
-  const [inputValue, setInputValue] = useState("");
-
-  const saveWallet = (provider: UpiWalletType) => {
-    if (!inputValue.trim()) return;
-    // Remove existing for this provider first
-    setUpiWallets((prev) => [
-      ...prev.filter((w) => w.name !== provider),
-      {
-        id: `${provider}-${Date.now()}`,
-        name: provider,
-        upiId: inputValue.trim(),
-      },
-    ]);
-    setAddingFor(null);
-    setInputValue("");
-    toast.success(`${provider} UPI ID saved!`);
-  };
-
-  const removeWallet = (provider: UpiWalletType) => {
-    setUpiWallets((prev) => prev.filter((w) => w.name !== provider));
-    toast.success(`${provider} UPI ID removed.`);
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="min-h-screen flex flex-col max-w-[430px] mx-auto bg-gray-100"
-    >
-      <header className="px-4 pt-10 pb-4 bg-gradient-to-r from-gray-900 to-teal-900 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => navigate("mine")}
-          className="text-white p-1"
-        >
-          <ArrowLeft size={22} />
-        </button>
-        <div className="flex items-center gap-2">
-          <Grid2x2 size={20} className="text-amber-400" />
-          <h1 className="text-white font-bold text-lg">Bind Payment App</h1>
-        </div>
-      </header>
-
-      <div className="flex-1 p-4 space-y-3">
-        <p className="text-xs text-gray-500 px-1">
-          Add your UPI ID for each payment provider to receive payments.
-        </p>
-        {providers.map((provider) => {
-          const saved = upiWallets.find((w) => w.name === provider);
-          const isAdding = addingFor === provider;
-          return (
-            <div
-              key={provider}
-              className="bg-white rounded-2xl shadow-sm p-4"
-              data-ocid={`bind_payment.${provider.toLowerCase()}.card`}
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <img
-                  src={WALLET_LOGOS[provider]}
-                  alt={provider}
-                  className="w-10 h-10 object-contain"
-                />
-                <span className="font-bold text-gray-800">{provider}</span>
-              </div>
-              {saved ? (
-                <div className="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2">
-                  <span className="text-sm text-gray-700 font-medium">
-                    {saved.upiId}
-                  </span>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setAddingFor(provider);
-                        setInputValue(saved.upiId);
-                      }}
-                      className="text-teal-600 text-xs font-semibold"
-                      data-ocid={`bind_payment.${provider.toLowerCase()}.edit_button`}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => removeWallet(provider)}
-                      className="text-red-500"
-                      data-ocid={`bind_payment.${provider.toLowerCase()}.delete_button`}
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                </div>
-              ) : isAdding ? (
-                <div className="flex gap-2">
-                  <Input
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    placeholder={`Enter ${provider} UPI ID`}
-                    className="flex-1 h-10 rounded-xl text-sm"
-                    data-ocid={`bind_payment.${provider.toLowerCase()}.input`}
-                  />
-                  <Button
-                    onClick={() => saveWallet(provider)}
-                    className="h-10 px-4 rounded-xl text-white text-sm font-bold"
-                    style={{
-                      background: "linear-gradient(135deg, #14b8a6, #0d9488)",
-                    }}
-                    data-ocid={`bind_payment.${provider.toLowerCase()}.save_button`}
-                  >
-                    Save
-                  </Button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAddingFor(null);
-                      setInputValue("");
-                    }}
-                    className="text-gray-400 px-1"
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAddingFor(provider);
-                    setInputValue("");
-                  }}
-                  className="w-full flex items-center justify-center gap-2 py-2 border-2 border-dashed border-teal-400 rounded-xl text-teal-600 text-sm font-semibold hover:bg-teal-50 transition-colors"
-                  data-ocid={`bind_payment.${provider.toLowerCase()}.open_modal_button`}
-                >
-                  <Plus size={16} />
-                  Add UPI ID
-                </button>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── BalanceHistoryScreen ─────────────────────────────────────────────────────
-function BalanceHistoryScreen({
-  navigate,
-  buyAmount,
-  rpCoins,
-}: {
-  navigate: (s: Screen) => void;
-  buyAmount: number;
-  rpCoins: number;
-}) {
-  const [activeTab, setActiveTab] = useState<"All" | "Buy" | "Bonus" | "Sell">(
-    "All",
-  );
-  const currentBalance = buyAmount + rpCoins;
-
-  const buyTxns =
-    buyAmount > 0
-      ? [
-          {
-            id: "b1",
-            date: "2026-03-28 14:32",
-            desc: "Buy RP - Level 1",
-            amount: buyAmount > 100 ? 100 : buyAmount,
-            type: "Buy",
-            color: "text-green-600",
-          },
-          {
-            id: "b2",
-            date: "2026-03-27 10:15",
-            desc: "Buy RP - Level 2",
-            amount: buyAmount > 200 ? 200 : 0,
-            type: "Buy",
-            color: "text-green-600",
-          },
-        ].filter((t) => t.amount > 0)
-      : [];
-
-  const bonusTxns =
-    rpCoins > 0
-      ? [
-          {
-            id: "r1",
-            date: "2026-03-28 14:33",
-            desc: "Reward Bonus - Level 1",
-            amount: rpCoins > 10 ? 10 : rpCoins,
-            type: "Bonus",
-            color: "text-amber-600",
-          },
-          {
-            id: "r2",
-            date: "2026-03-27 10:16",
-            desc: "Reward Bonus - Level 2",
-            amount: rpCoins > 20 ? 20 : 0,
-            type: "Bonus",
-            color: "text-amber-600",
-          },
-        ].filter((t) => t.amount > 0)
-      : [];
-
-  const allTxns = [...buyTxns, ...bonusTxns].sort((a, b) =>
-    b.date.localeCompare(a.date),
-  );
-
-  const getFiltered = () => {
-    if (activeTab === "All") return allTxns;
-    if (activeTab === "Buy") return buyTxns;
-    if (activeTab === "Bonus") return bonusTxns;
-    return [];
-  };
-
-  const filtered = getFiltered();
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="min-h-screen flex flex-col max-w-[430px] mx-auto bg-gray-100"
-    >
-      <header className="px-4 pt-10 pb-4 bg-gradient-to-r from-gray-900 to-teal-900 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => navigate("mine")}
-          className="text-white p-1"
-        >
-          <ArrowLeft size={22} />
-        </button>
-        <div className="flex items-center gap-2">
-          <History size={20} className="text-amber-400" />
-          <h1 className="text-white font-bold text-lg">Transaction History</h1>
-        </div>
-      </header>
-
-      {/* Balance Summary */}
-      <div className="mx-4 mt-4 bg-gradient-to-r from-teal-700 to-teal-600 rounded-2xl p-4 shadow-md">
-        <p className="text-teal-200 text-xs font-medium mb-1">
-          Current Balance
-        </p>
-        <p className="text-white text-3xl font-black">
-          ₹{currentBalance.toFixed(2)}
-        </p>
-        <div className="flex gap-4 mt-2">
-          <div>
-            <p className="text-teal-300 text-[10px]">Buy Amount</p>
-            <p className="text-white font-bold text-sm">
-              ₹{buyAmount.toFixed(2)}
-            </p>
-          </div>
-          <div>
-            <p className="text-teal-300 text-[10px]">Rewards</p>
-            <p className="text-amber-300 font-bold text-sm">
-              ₹{rpCoins.toFixed(2)}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="mx-4 mt-3 flex gap-2" data-ocid="balance_history.tab">
-        {(["All", "Buy", "Bonus", "Sell"] as const).map((tab) => (
-          <button
-            key={tab}
-            type="button"
-            onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-colors ${activeTab === tab ? "bg-teal-600 text-white" : "bg-white text-gray-600"}`}
-            data-ocid={`balance_history.${tab.toLowerCase()}.tab`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      {/* Transaction List */}
-      <div className="flex-1 p-4 space-y-2 pb-8">
-        {filtered.length === 0 ? (
-          <div
-            className="bg-white rounded-2xl p-8 text-center"
-            data-ocid="balance_history.empty_state"
-          >
-            <History size={40} className="text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-400 font-medium text-sm">
-              No transactions yet
-            </p>
-            <p className="text-gray-300 text-xs mt-1">
-              Your transaction history will appear here
-            </p>
-          </div>
-        ) : (
-          filtered.map((txn, idx) => (
-            <div
-              key={txn.id}
-              className="bg-white rounded-2xl px-4 py-3 shadow-sm flex items-center gap-3"
-              data-ocid={`balance_history.item.${idx + 1}`}
-            >
-              <div
-                className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${txn.type === "Buy" ? "bg-green-100" : "bg-amber-100"}`}
-              >
-                {txn.type === "Buy" ? (
-                  <ShoppingCart size={16} className="text-green-600" />
-                ) : (
-                  <Gift size={16} className="text-amber-600" />
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-800 truncate">
-                  {txn.desc}
-                </p>
-                <p className="text-xs text-gray-400">{txn.date}</p>
-              </div>
-              <div className="text-right">
-                <p className={`font-bold text-sm ${txn.color}`}>
-                  +₹{txn.amount.toFixed(2)}
-                </p>
-                <span
-                  className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${txn.type === "Buy" ? "bg-green-100 text-green-600" : "bg-amber-100 text-amber-600"}`}
-                >
-                  {txn.type}
-                </span>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    </motion.div>
-  );
-}
-
 // ─── Main App ────────────────────────────────────────────────────────────────
 export default function App() {
   const [screen, setScreen] = useState<Screen>("splash");
@@ -4050,7 +2943,7 @@ export default function App() {
   const [buyQuantity, setBuyQuantity] = useState(0);
   const [buyAmount, setBuyAmount] = useState(0);
   const [rpCoins, setRpCoins] = useState(0);
-  const sellAmount = buyAmount + rpCoins;
+  const [sellAmount] = useState(600.0);
   const [totalRevenue] = useState(0);
   const [upiWallets, setUpiWallets] = useState<UpiWallet[]>([]);
   const [sellTransactions, _setSellTransactions] = useState<SellTransaction[]>(
@@ -4212,8 +3105,6 @@ export default function App() {
             }
             navigate={navigate}
             onLogout={() => navigate("splash")}
-            upiWallets={upiWallets}
-            setUpiWallets={setUpiWallets}
           />
         )}
         {screen === "buy-rp-record" && (
@@ -4223,44 +3114,6 @@ export default function App() {
           <SellRPRecordScreen
             key="sell-rp-record"
             navigate={navigate}
-            currentBalance={buyAmount + rpCoins}
-          />
-        )}
-        {screen === "team-management" && (
-          <TeamManagementScreen
-            key="team-management"
-            inviteCode={
-              registeredUsers[phone.replace(/\D/g, "")]?.inviteCode ||
-              `WYN${phone.slice(-4)}`
-            }
-            navigate={navigate}
-          />
-        )}
-        {screen === "account-security" && (
-          <AccountSecurityScreen
-            key="account-security"
-            navigate={navigate}
-            phone={phone}
-            registeredUsers={registeredUsers}
-            saveUser={saveUser}
-          />
-        )}
-        {screen === "common-problem" && (
-          <CommonProblemScreen key="common-problem" navigate={navigate} />
-        )}
-        {screen === "bind-payment" && (
-          <BindPaymentScreen
-            key="bind-payment"
-            navigate={navigate}
-            upiWallets={upiWallets}
-            setUpiWallets={setUpiWallets}
-          />
-        )}
-        {screen === "balance-history" && (
-          <BalanceHistoryScreen
-            key="balance-history"
-            navigate={navigate}
-            buyAmount={buyAmount}
             rpCoins={rpCoins}
           />
         )}

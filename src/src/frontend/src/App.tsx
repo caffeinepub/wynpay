@@ -13,7 +13,6 @@ import {
   CheckCircle,
   ChevronDown,
   ChevronRight,
-  ChevronUp,
   Copy,
   Eye,
   EyeOff,
@@ -21,7 +20,6 @@ import {
   Grid2x2,
   Headphones,
   HelpCircle,
-  History,
   Home,
   Loader2,
   Lock,
@@ -29,7 +27,6 @@ import {
   Plus,
   RefreshCw,
   Send,
-  Shield,
   ShoppingCart,
   Smartphone,
   Trash2,
@@ -61,11 +58,7 @@ type Screen =
   | "mine"
   | "buy-rp-record"
   | "sell-rp-record"
-  | "team-management"
-  | "account-security"
-  | "common-problem"
-  | "bind-payment"
-  | "balance-history";
+  | "team-management";
 
 // ─── UPI Wallet Types ────────────────────────────────────────────────────────
 type UpiWalletType = "PhonePe" | "Paytm" | "MobiKwik" | "FreeCharge";
@@ -3118,8 +3111,6 @@ function MineScreen({
   inviteCode,
   navigate,
   onLogout,
-  upiWallets: _upiWallets,
-  setUpiWallets: _setUpiWallets,
 }: {
   buyAmount: number;
   rpCoins: number;
@@ -3127,8 +3118,6 @@ function MineScreen({
   inviteCode: string;
   navigate: (s: Screen) => void;
   onLogout: () => void;
-  upiWallets: UpiWallet[];
-  setUpiWallets: React.Dispatch<React.SetStateAction<UpiWallet[]>>;
 }) {
   const [copied, setCopied] = useState(false);
   const currentBalance = buyAmount + rpCoins;
@@ -3153,12 +3142,10 @@ function MineScreen({
     {
       icon: <Grid2x2 size={18} className="text-teal-600" />,
       label: "Bind Payment App",
-      onClick: () => navigate("bind-payment"),
     },
     {
       icon: <HelpCircle size={18} className="text-blue-500" />,
       label: "Common Problem",
-      onClick: () => navigate("common-problem"),
     },
     {
       icon: <Headphones size={18} className="text-purple-500" />,
@@ -3168,7 +3155,6 @@ function MineScreen({
     {
       icon: <Lock size={18} className="text-gray-500" />,
       label: "Account Security",
-      onClick: () => navigate("account-security"),
     },
     {
       icon: <Send size={18} className="text-teal-500" />,
@@ -3233,11 +3219,9 @@ function MineScreen({
 
       <div className="flex-1 overflow-y-auto pb-24 space-y-3 pt-3 px-3">
         {/* Current Balance Card */}
-        <button
-          type="button"
-          onClick={() => navigate("balance-history")}
-          className="w-full bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between hover:bg-gray-50 transition-colors"
-          data-ocid="mine.balance.tap"
+        <div
+          className="bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between"
+          data-ocid="mine.balance.card"
         >
           <div>
             <p className="text-xs text-gray-500 font-medium mb-1">
@@ -3269,7 +3253,7 @@ function MineScreen({
             </div>
             <ChevronRight size={18} className="text-gray-400" />
           </div>
-        </button>
+        </div>
 
         {/* My Team Card */}
         <div
@@ -3355,667 +3339,6 @@ function MineScreen({
       </div>
 
       <BottomNav active="mine" onNavigate={navigate} />
-    </motion.div>
-  );
-}
-
-// ─── AccountSecurityScreen ───────────────────────────────────────────────────
-function AccountSecurityScreen({
-  navigate,
-  phone,
-  registeredUsers,
-  saveUser,
-}: {
-  navigate: (s: Screen) => void;
-  phone: string;
-  registeredUsers: UserStore;
-  saveUser: (phone: string, user: RegisteredUser) => void;
-}) {
-  const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [otp, setOtp] = useState("");
-  const [generatedOtp, setGeneratedOtp] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showNew, setShowNew] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [error, setError] = useState("");
-
-  const sendCode = () => {
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    setGeneratedOtp(code);
-    toast.success(`Your verification code: ${code}`);
-    setStep(2);
-  };
-
-  const verifyCode = () => {
-    if (otp === generatedOtp) {
-      setError("");
-      setStep(3);
-    } else {
-      setError("Invalid code. Please try again.");
-    }
-  };
-
-  const changePassword = () => {
-    if (newPassword.length < 6) {
-      setError("Password must be at least 6 characters.");
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-    const normalized = phone.replace(/\D/g, "");
-    const existing = registeredUsers[normalized];
-    if (existing) {
-      saveUser(normalized, { ...existing, password: newPassword });
-    }
-    toast.success("Password changed successfully!");
-    navigate("mine");
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="min-h-screen flex flex-col max-w-[430px] mx-auto bg-gray-100"
-    >
-      <header className="px-4 pt-10 pb-4 bg-gradient-to-r from-gray-900 to-teal-900 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => navigate("mine")}
-          className="text-white p-1"
-        >
-          <ArrowLeft size={22} />
-        </button>
-        <div className="flex items-center gap-2">
-          <Shield size={20} className="text-amber-400" />
-          <h1 className="text-white font-bold text-lg">Account Security</h1>
-        </div>
-      </header>
-
-      <div className="flex-1 p-4 space-y-4">
-        {/* Step indicators */}
-        <div className="flex items-center gap-2 justify-center py-2">
-          {[1, 2, 3].map((s) => (
-            <div key={s} className="flex items-center gap-2">
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step >= s ? "bg-teal-600 text-white" : "bg-gray-300 text-gray-500"}`}
-              >
-                {s}
-              </div>
-              {s < 3 && (
-                <div
-                  className={`w-10 h-1 rounded ${step > s ? "bg-teal-600" : "bg-gray-300"}`}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-
-        {step === 1 && (
-          <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
-            <h2 className="font-bold text-gray-800 text-base">
-              Verify Your Mobile Number
-            </h2>
-            <div>
-              <p className="text-xs text-gray-500 font-medium">
-                Registered Mobile Number
-              </p>
-              <div className="mt-1 px-4 py-3 bg-gray-100 rounded-xl text-gray-700 font-semibold">
-                +91 {phone || "XXXXXXXXXX"}
-              </div>
-            </div>
-            <Button
-              onClick={sendCode}
-              className="w-full h-12 rounded-xl font-bold text-white"
-              style={{
-                background: "linear-gradient(135deg, #14b8a6, #0d9488)",
-              }}
-              data-ocid="account_security.send_code.button"
-            >
-              Send Verification Code
-            </Button>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
-            <h2 className="font-bold text-gray-800 text-base">
-              Enter Verification Code
-            </h2>
-            <p className="text-xs text-gray-500">Code sent to +91 {phone}</p>
-            <div className="flex justify-center">
-              <InputOTP maxLength={6} value={otp} onChange={setOtp}>
-                <InputOTPGroup>
-                  {[0, 1, 2, 3, 4, 5].map((i) => (
-                    <InputOTPSlot key={i} index={i} />
-                  ))}
-                </InputOTPGroup>
-              </InputOTP>
-            </div>
-            {error && (
-              <p className="text-red-500 text-xs text-center">{error}</p>
-            )}
-            <Button
-              onClick={verifyCode}
-              className="w-full h-12 rounded-xl font-bold text-white"
-              style={{
-                background: "linear-gradient(135deg, #14b8a6, #0d9488)",
-              }}
-              data-ocid="account_security.verify.button"
-            >
-              Verify Code
-            </Button>
-          </div>
-        )}
-
-        {step === 3 && (
-          <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
-            <h2 className="font-bold text-gray-800 text-base">
-              Set New Password
-            </h2>
-            <div className="space-y-3">
-              <div className="relative">
-                <p className="text-xs text-gray-500 font-medium">
-                  New Password
-                </p>
-                <div className="relative mt-1">
-                  <Input
-                    type={showNew ? "text" : "password"}
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Enter new password"
-                    className="h-12 rounded-xl pr-10"
-                    data-ocid="account_security.new_password.input"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNew(!showNew)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-                  >
-                    {showNew ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-              </div>
-              <div className="relative">
-                <p className="text-xs text-gray-500 font-medium">
-                  Confirm New Password
-                </p>
-                <div className="relative mt-1">
-                  <Input
-                    type={showConfirm ? "text" : "password"}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm new password"
-                    className="h-12 rounded-xl pr-10"
-                    data-ocid="account_security.confirm_password.input"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirm(!showConfirm)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-                  >
-                    {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-              </div>
-            </div>
-            {error && (
-              <p className="text-red-500 text-xs text-center">{error}</p>
-            )}
-            <Button
-              onClick={changePassword}
-              className="w-full h-12 rounded-xl font-bold text-white"
-              style={{
-                background: "linear-gradient(135deg, #14b8a6, #0d9488)",
-              }}
-              data-ocid="account_security.change_password.button"
-            >
-              Change Password
-            </Button>
-          </div>
-        )}
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── CommonProblemScreen ──────────────────────────────────────────────────────
-function CommonProblemScreen({ navigate }: { navigate: (s: Screen) => void }) {
-  const faqs = [
-    {
-      q: "How to recover an invalid wallet?",
-      a: "You can log out of your wallet account and log back in.",
-    },
-    {
-      q: "Get a higher withdrawal limit?",
-      a: "Please complete KYC verification. After completing KYC, you will be prompted for your daily/monthly transaction limit.",
-    },
-    {
-      q: "About Mobikwik Payment Issues",
-      a: "Due to an official issue with Mobikwik, some users may have their payments automatically returned when purchasing tasks.\n\nPlease note:\n• Please do not attempt to pay again due to payment failures.\n• If a payment fails, please skip the failed order and proceed directly to the next one.",
-    },
-  ];
-  const [open, setOpen] = useState<number[]>([0, 1, 2]);
-
-  const toggle = (idx: number) => {
-    setOpen((prev) =>
-      prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx],
-    );
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="min-h-screen flex flex-col max-w-[430px] mx-auto bg-gray-100"
-    >
-      <header className="px-4 pt-10 pb-4 bg-gradient-to-r from-gray-900 to-teal-900 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => navigate("mine")}
-          className="text-white p-1"
-        >
-          <ArrowLeft size={22} />
-        </button>
-        <div className="flex items-center gap-2">
-          <HelpCircle size={20} className="text-amber-400" />
-          <h1 className="text-white font-bold text-lg">Frequently Questions</h1>
-        </div>
-      </header>
-
-      <div className="flex-1 p-4 space-y-3">
-        {faqs.map((faq) => (
-          <div
-            key={faq.q}
-            className="bg-white rounded-2xl shadow-sm overflow-hidden"
-            data-ocid={`faq.item.${faqs.indexOf(faq) + 1}`}
-          >
-            <button
-              type="button"
-              onClick={() => toggle(faqs.indexOf(faq))}
-              className="w-full flex items-center justify-between px-4 py-4"
-            >
-              <span className="text-sm font-semibold text-gray-800 text-left flex-1 pr-2">
-                {faq.q}
-              </span>
-              {open.includes(faqs.indexOf(faq)) ? (
-                <ChevronUp size={18} className="text-green-600 flex-shrink-0" />
-              ) : (
-                <ChevronDown
-                  size={18}
-                  className="text-green-600 flex-shrink-0"
-                />
-              )}
-            </button>
-            {open.includes(faqs.indexOf(faq)) && (
-              <div className="px-4 pb-4">
-                <div className="bg-gray-100 rounded-xl p-3">
-                  {faq.a.split("\n").map((line, li) => (
-                    <p
-                      key={line}
-                      className={`text-xs text-gray-600 leading-relaxed ${li > 0 ? "mt-1" : ""}`}
-                    >
-                      {line}
-                    </p>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── BindPaymentScreen ────────────────────────────────────────────────────────
-function BindPaymentScreen({
-  navigate,
-  upiWallets,
-  setUpiWallets,
-}: {
-  navigate: (s: Screen) => void;
-  upiWallets: UpiWallet[];
-  setUpiWallets: React.Dispatch<React.SetStateAction<UpiWallet[]>>;
-}) {
-  const providers: UpiWalletType[] = [
-    "PhonePe",
-    "Paytm",
-    "MobiKwik",
-    "FreeCharge",
-  ];
-  const [addingFor, setAddingFor] = useState<UpiWalletType | null>(null);
-  const [inputValue, setInputValue] = useState("");
-
-  const saveWallet = (provider: UpiWalletType) => {
-    if (!inputValue.trim()) return;
-    // Remove existing for this provider first
-    setUpiWallets((prev) => [
-      ...prev.filter((w) => w.name !== provider),
-      {
-        id: `${provider}-${Date.now()}`,
-        name: provider,
-        upiId: inputValue.trim(),
-      },
-    ]);
-    setAddingFor(null);
-    setInputValue("");
-    toast.success(`${provider} UPI ID saved!`);
-  };
-
-  const removeWallet = (provider: UpiWalletType) => {
-    setUpiWallets((prev) => prev.filter((w) => w.name !== provider));
-    toast.success(`${provider} UPI ID removed.`);
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="min-h-screen flex flex-col max-w-[430px] mx-auto bg-gray-100"
-    >
-      <header className="px-4 pt-10 pb-4 bg-gradient-to-r from-gray-900 to-teal-900 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => navigate("mine")}
-          className="text-white p-1"
-        >
-          <ArrowLeft size={22} />
-        </button>
-        <div className="flex items-center gap-2">
-          <Grid2x2 size={20} className="text-amber-400" />
-          <h1 className="text-white font-bold text-lg">Bind Payment App</h1>
-        </div>
-      </header>
-
-      <div className="flex-1 p-4 space-y-3">
-        <p className="text-xs text-gray-500 px-1">
-          Add your UPI ID for each payment provider to receive payments.
-        </p>
-        {providers.map((provider) => {
-          const saved = upiWallets.find((w) => w.name === provider);
-          const isAdding = addingFor === provider;
-          return (
-            <div
-              key={provider}
-              className="bg-white rounded-2xl shadow-sm p-4"
-              data-ocid={`bind_payment.${provider.toLowerCase()}.card`}
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <img
-                  src={WALLET_LOGOS[provider]}
-                  alt={provider}
-                  className="w-10 h-10 object-contain"
-                />
-                <span className="font-bold text-gray-800">{provider}</span>
-              </div>
-              {saved ? (
-                <div className="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2">
-                  <span className="text-sm text-gray-700 font-medium">
-                    {saved.upiId}
-                  </span>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setAddingFor(provider);
-                        setInputValue(saved.upiId);
-                      }}
-                      className="text-teal-600 text-xs font-semibold"
-                      data-ocid={`bind_payment.${provider.toLowerCase()}.edit_button`}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => removeWallet(provider)}
-                      className="text-red-500"
-                      data-ocid={`bind_payment.${provider.toLowerCase()}.delete_button`}
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                </div>
-              ) : isAdding ? (
-                <div className="flex gap-2">
-                  <Input
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    placeholder={`Enter ${provider} UPI ID`}
-                    className="flex-1 h-10 rounded-xl text-sm"
-                    data-ocid={`bind_payment.${provider.toLowerCase()}.input`}
-                  />
-                  <Button
-                    onClick={() => saveWallet(provider)}
-                    className="h-10 px-4 rounded-xl text-white text-sm font-bold"
-                    style={{
-                      background: "linear-gradient(135deg, #14b8a6, #0d9488)",
-                    }}
-                    data-ocid={`bind_payment.${provider.toLowerCase()}.save_button`}
-                  >
-                    Save
-                  </Button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAddingFor(null);
-                      setInputValue("");
-                    }}
-                    className="text-gray-400 px-1"
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAddingFor(provider);
-                    setInputValue("");
-                  }}
-                  className="w-full flex items-center justify-center gap-2 py-2 border-2 border-dashed border-teal-400 rounded-xl text-teal-600 text-sm font-semibold hover:bg-teal-50 transition-colors"
-                  data-ocid={`bind_payment.${provider.toLowerCase()}.open_modal_button`}
-                >
-                  <Plus size={16} />
-                  Add UPI ID
-                </button>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── BalanceHistoryScreen ─────────────────────────────────────────────────────
-function BalanceHistoryScreen({
-  navigate,
-  buyAmount,
-  rpCoins,
-}: {
-  navigate: (s: Screen) => void;
-  buyAmount: number;
-  rpCoins: number;
-}) {
-  const [activeTab, setActiveTab] = useState<"All" | "Buy" | "Bonus" | "Sell">(
-    "All",
-  );
-  const currentBalance = buyAmount + rpCoins;
-
-  const buyTxns =
-    buyAmount > 0
-      ? [
-          {
-            id: "b1",
-            date: "2026-03-28 14:32",
-            desc: "Buy RP - Level 1",
-            amount: buyAmount > 100 ? 100 : buyAmount,
-            type: "Buy",
-            color: "text-green-600",
-          },
-          {
-            id: "b2",
-            date: "2026-03-27 10:15",
-            desc: "Buy RP - Level 2",
-            amount: buyAmount > 200 ? 200 : 0,
-            type: "Buy",
-            color: "text-green-600",
-          },
-        ].filter((t) => t.amount > 0)
-      : [];
-
-  const bonusTxns =
-    rpCoins > 0
-      ? [
-          {
-            id: "r1",
-            date: "2026-03-28 14:33",
-            desc: "Reward Bonus - Level 1",
-            amount: rpCoins > 10 ? 10 : rpCoins,
-            type: "Bonus",
-            color: "text-amber-600",
-          },
-          {
-            id: "r2",
-            date: "2026-03-27 10:16",
-            desc: "Reward Bonus - Level 2",
-            amount: rpCoins > 20 ? 20 : 0,
-            type: "Bonus",
-            color: "text-amber-600",
-          },
-        ].filter((t) => t.amount > 0)
-      : [];
-
-  const allTxns = [...buyTxns, ...bonusTxns].sort((a, b) =>
-    b.date.localeCompare(a.date),
-  );
-
-  const getFiltered = () => {
-    if (activeTab === "All") return allTxns;
-    if (activeTab === "Buy") return buyTxns;
-    if (activeTab === "Bonus") return bonusTxns;
-    return [];
-  };
-
-  const filtered = getFiltered();
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="min-h-screen flex flex-col max-w-[430px] mx-auto bg-gray-100"
-    >
-      <header className="px-4 pt-10 pb-4 bg-gradient-to-r from-gray-900 to-teal-900 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => navigate("mine")}
-          className="text-white p-1"
-        >
-          <ArrowLeft size={22} />
-        </button>
-        <div className="flex items-center gap-2">
-          <History size={20} className="text-amber-400" />
-          <h1 className="text-white font-bold text-lg">Transaction History</h1>
-        </div>
-      </header>
-
-      {/* Balance Summary */}
-      <div className="mx-4 mt-4 bg-gradient-to-r from-teal-700 to-teal-600 rounded-2xl p-4 shadow-md">
-        <p className="text-teal-200 text-xs font-medium mb-1">
-          Current Balance
-        </p>
-        <p className="text-white text-3xl font-black">
-          ₹{currentBalance.toFixed(2)}
-        </p>
-        <div className="flex gap-4 mt-2">
-          <div>
-            <p className="text-teal-300 text-[10px]">Buy Amount</p>
-            <p className="text-white font-bold text-sm">
-              ₹{buyAmount.toFixed(2)}
-            </p>
-          </div>
-          <div>
-            <p className="text-teal-300 text-[10px]">Rewards</p>
-            <p className="text-amber-300 font-bold text-sm">
-              ₹{rpCoins.toFixed(2)}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="mx-4 mt-3 flex gap-2" data-ocid="balance_history.tab">
-        {(["All", "Buy", "Bonus", "Sell"] as const).map((tab) => (
-          <button
-            key={tab}
-            type="button"
-            onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-colors ${activeTab === tab ? "bg-teal-600 text-white" : "bg-white text-gray-600"}`}
-            data-ocid={`balance_history.${tab.toLowerCase()}.tab`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      {/* Transaction List */}
-      <div className="flex-1 p-4 space-y-2 pb-8">
-        {filtered.length === 0 ? (
-          <div
-            className="bg-white rounded-2xl p-8 text-center"
-            data-ocid="balance_history.empty_state"
-          >
-            <History size={40} className="text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-400 font-medium text-sm">
-              No transactions yet
-            </p>
-            <p className="text-gray-300 text-xs mt-1">
-              Your transaction history will appear here
-            </p>
-          </div>
-        ) : (
-          filtered.map((txn, idx) => (
-            <div
-              key={txn.id}
-              className="bg-white rounded-2xl px-4 py-3 shadow-sm flex items-center gap-3"
-              data-ocid={`balance_history.item.${idx + 1}`}
-            >
-              <div
-                className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${txn.type === "Buy" ? "bg-green-100" : "bg-amber-100"}`}
-              >
-                {txn.type === "Buy" ? (
-                  <ShoppingCart size={16} className="text-green-600" />
-                ) : (
-                  <Gift size={16} className="text-amber-600" />
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-800 truncate">
-                  {txn.desc}
-                </p>
-                <p className="text-xs text-gray-400">{txn.date}</p>
-              </div>
-              <div className="text-right">
-                <p className={`font-bold text-sm ${txn.color}`}>
-                  +₹{txn.amount.toFixed(2)}
-                </p>
-                <span
-                  className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${txn.type === "Buy" ? "bg-green-100 text-green-600" : "bg-amber-100 text-amber-600"}`}
-                >
-                  {txn.type}
-                </span>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
     </motion.div>
   );
 }
@@ -4212,8 +3535,6 @@ export default function App() {
             }
             navigate={navigate}
             onLogout={() => navigate("splash")}
-            upiWallets={upiWallets}
-            setUpiWallets={setUpiWallets}
           />
         )}
         {screen === "buy-rp-record" && (
@@ -4234,34 +3555,6 @@ export default function App() {
               `WYN${phone.slice(-4)}`
             }
             navigate={navigate}
-          />
-        )}
-        {screen === "account-security" && (
-          <AccountSecurityScreen
-            key="account-security"
-            navigate={navigate}
-            phone={phone}
-            registeredUsers={registeredUsers}
-            saveUser={saveUser}
-          />
-        )}
-        {screen === "common-problem" && (
-          <CommonProblemScreen key="common-problem" navigate={navigate} />
-        )}
-        {screen === "bind-payment" && (
-          <BindPaymentScreen
-            key="bind-payment"
-            navigate={navigate}
-            upiWallets={upiWallets}
-            setUpiWallets={setUpiWallets}
-          />
-        )}
-        {screen === "balance-history" && (
-          <BalanceHistoryScreen
-            key="balance-history"
-            navigate={navigate}
-            buyAmount={buyAmount}
-            rpCoins={rpCoins}
           />
         )}
       </AnimatePresence>
