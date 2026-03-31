@@ -38,6 +38,7 @@ import {
   Zap,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -56,7 +57,8 @@ type Screen =
   | "sell-rp"
   | "mine"
   | "buy-rp-record"
-  | "sell-rp-record";
+  | "sell-rp-record"
+  | "team-management";
 
 // ─── UPI Wallet Types ────────────────────────────────────────────────────────
 type UpiWalletType = "PhonePe" | "Paytm" | "MobiKwik" | "FreeCharge";
@@ -1416,6 +1418,108 @@ function NewcomerBonusScreen({
       </div>
 
       <main className="flex-1 px-4 py-6 space-y-5">
+        {/* Task Introduction Card */}
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
+          <div className="p-4">
+            <h3 className="text-lg font-black text-gray-800 mb-3">
+              1. Task Introduction
+            </h3>
+            <div className="flex gap-3">
+              {/* Phone mockup illustration */}
+              <div className="w-28 flex-shrink-0 bg-gray-800 rounded-2xl p-1.5 shadow-md">
+                <div className="bg-blue-600 rounded-xl p-2 h-full min-h-[100px]">
+                  <div className="flex gap-1 mb-1.5">
+                    {["L1", "L2", "L3", "L4", "L5", "L6"].map((l) => (
+                      <span
+                        key={l}
+                        className="text-[6px] bg-blue-400 text-white rounded px-0.5 font-bold"
+                      >
+                        {l}
+                      </span>
+                    ))}
+                  </div>
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="bg-white rounded mb-1 p-1 flex justify-between items-center"
+                    >
+                      <span className="text-[5px] text-gray-600">
+                        Payment: 100.0RP
+                      </span>
+                      <span className="text-[5px] bg-blue-500 text-white rounded px-0.5">
+                        Receive
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Callout text */}
+              <div className="flex-1 bg-blue-50 rounded-xl p-3 border border-blue-100 relative">
+                <p className="text-xs text-gray-700 leading-relaxed">
+                  You can purchase orders of different levels. After receiving
+                  the order, it must be completed within the specified time,
+                  otherwise the order will be automatically cancelled.
+                </p>
+                {/* Arrow */}
+                <div className="absolute -left-2.5 top-1/2 -translate-y-1/2 w-0 h-0 border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent border-r-[10px] border-r-blue-100" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* About the Team Card */}
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
+          <div className="p-4">
+            <h3 className="text-lg font-black text-gray-800 mb-3">
+              3. About the Team
+            </h3>
+            <div className="flex gap-3">
+              {/* Phone mockup illustration */}
+              <div className="w-28 flex-shrink-0 bg-gray-800 rounded-2xl p-1.5 shadow-md">
+                <div className="bg-blue-600 rounded-xl p-2 h-full min-h-[100px]">
+                  <div className="bg-white/20 rounded p-1 mb-1.5">
+                    <p className="text-[5px] text-white font-bold">
+                      My total commission
+                    </p>
+                    <p className="text-[8px] text-white font-black">81.18</p>
+                  </div>
+                  <div className="bg-white rounded p-1 mb-1">
+                    <p className="text-[5px] text-gray-500 mb-0.5">
+                      Invite Link
+                    </p>
+                    <div className="bg-gray-100 rounded px-1 py-0.5 flex justify-between">
+                      <span className="text-[4px] text-gray-600">
+                        https://wynpay...
+                      </span>
+                    </div>
+                  </div>
+                  <div className="bg-white rounded p-1">
+                    <div className="grid grid-cols-4 gap-0.5">
+                      {["Tg", "Fb", "Wa", "QR"].map((i) => (
+                        <div
+                          key={i}
+                          className="w-3 h-3 rounded-full bg-teal-400 flex items-center justify-center"
+                        >
+                          <span className="text-[4px] text-white">{i[0]}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {/* Callout text */}
+              <div className="flex-1 bg-blue-50 rounded-xl p-3 border border-blue-100 relative">
+                <p className="text-xs text-gray-700 leading-relaxed">
+                  Share the invitation code and invite friends to join your
+                  team. After your team members complete the order, you will
+                  receive a certain percentage of the rebate.
+                </p>
+                <div className="absolute -left-2.5 top-1/2 -translate-y-1/2 w-0 h-0 border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent border-r-[10px] border-r-blue-100" />
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl p-6 text-white text-center">
           <div className="text-5xl mb-3">🎁</div>
           <h2 className="text-2xl font-black">400 Tokens</h2>
@@ -2662,6 +2766,339 @@ function SellRPScreen({
   );
 }
 
+function TeamManagementScreen({
+  inviteCode,
+  navigate,
+}: {
+  inviteCode: string;
+  navigate: (s: Screen) => void;
+}) {
+  const [linkCopied, setLinkCopied] = useState(false);
+  const inviteLink = `https://wynpay-wxx.caffeine.xyz/?inviteCode=${inviteCode}`;
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(inviteLink).catch(() => {});
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
+    toast.success("Invite link copied!");
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="min-h-screen flex flex-col max-w-[430px] mx-auto bg-gray-100"
+    >
+      {/* Header */}
+      <div className="px-4 pt-10 pb-4 bg-white shadow-sm flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => navigate("mine")}
+          className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
+          data-ocid="team.back.button"
+        >
+          <ArrowLeft size={16} className="text-gray-600" />
+        </button>
+        <h1 className="font-bold text-gray-800 text-lg">Team management</h1>
+      </div>
+
+      <div className="flex-1 overflow-y-auto pb-8 space-y-3 pt-3 px-3">
+        {/* Yesterday's Rebates - Blue Card */}
+        <div className="bg-blue-600 rounded-2xl p-4 relative overflow-hidden">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-white font-bold text-base mb-3">
+                Yesterday's Rebates
+              </p>
+              <div className="flex gap-8">
+                <div>
+                  <p className="text-blue-200 text-xs">Top Up</p>
+                  <p className="text-white font-bold text-lg">0.0</p>
+                </div>
+                <div>
+                  <p className="text-blue-200 text-xs flex items-center gap-1">
+                    Purchase <Lock size={12} className="text-blue-300" />
+                  </p>
+                  <p className="text-white font-bold text-lg">0.0</p>
+                </div>
+              </div>
+            </div>
+            {/* Calendar widget */}
+            <div className="bg-white rounded-xl p-3 text-center shadow-md min-w-[90px]">
+              <div className="flex justify-center gap-3 mb-1">
+                <div className="w-1 h-4 bg-orange-400 rounded-full" />
+                <div className="w-1 h-4 bg-orange-400 rounded-full" />
+              </div>
+              <p className="text-gray-500 text-xs">Team Members</p>
+              <p className="text-gray-800 font-black text-2xl">3</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Today's Rebates */}
+        <div className="bg-white rounded-2xl p-4 shadow-sm">
+          <p className="font-bold text-gray-800 text-base mb-3">
+            Today's Rebates
+          </p>
+          <div className="flex gap-8">
+            <div>
+              <p className="text-gray-500 text-xs">Top Up</p>
+              <p className="text-gray-800 font-bold text-base">0.0</p>
+            </div>
+            <div>
+              <p className="text-gray-500 text-xs">Purchase</p>
+              <p className="text-gray-800 font-bold text-base">0.0</p>
+            </div>
+            <div>
+              <p className="text-gray-500 text-xs">Team Additions</p>
+              <p className="text-gray-800 font-bold text-base">0</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Invite Link */}
+        <div className="bg-white rounded-2xl p-4 shadow-sm">
+          <p className="font-bold text-gray-800 text-base mb-3">Invite Link</p>
+          <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-3 py-2.5 border border-gray-200">
+            <span className="flex-1 text-xs text-gray-600 truncate">
+              {inviteLink}
+            </span>
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              className="text-gray-500 hover:text-gray-700 flex-shrink-0"
+            >
+              {linkCopied ? (
+                <span className="text-[11px] text-green-600 font-bold">✓</span>
+              ) : (
+                <Copy size={16} />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* More ways */}
+        <div className="bg-white rounded-2xl p-4 shadow-sm">
+          <p className="font-bold text-gray-800 text-base mb-4">More ways</p>
+          <div className="flex justify-around">
+            {/* Telegram */}
+            <button
+              type="button"
+              onClick={() =>
+                window.open("https://t.me/wynpayofficls", "_blank")
+              }
+              className="flex flex-col items-center gap-1"
+            >
+              <div className="w-12 h-12 rounded-full bg-[#29b5e8] flex items-center justify-center shadow-sm">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="white"
+                  className="w-7 h-7"
+                  role="img"
+                  aria-label="Telegram"
+                >
+                  <title>Telegram</title>
+                  <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.869 4.326-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.83.94z" />
+                </svg>
+              </div>
+              <span className="text-xs text-gray-500">Telegram</span>
+            </button>
+            {/* Facebook */}
+            <button
+              type="button"
+              onClick={() => window.open("https://facebook.com", "_blank")}
+              className="flex flex-col items-center gap-1"
+            >
+              <div className="w-12 h-12 rounded-full bg-[#1877f2] flex items-center justify-center shadow-sm">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="white"
+                  className="w-7 h-7"
+                  role="img"
+                  aria-label="Facebook"
+                >
+                  <title>Facebook</title>
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                </svg>
+              </div>
+              <span className="text-xs text-gray-500">FaceBook</span>
+            </button>
+            {/* WhatsApp */}
+            <button
+              type="button"
+              onClick={() => window.open("https://whatsapp.com", "_blank")}
+              className="flex flex-col items-center gap-1"
+            >
+              <div className="w-12 h-12 rounded-full bg-[#25d366] flex items-center justify-center shadow-sm">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="white"
+                  className="w-7 h-7"
+                  role="img"
+                  aria-label="WhatsApp"
+                >
+                  <title>WhatsApp</title>
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                </svg>
+              </div>
+              <span className="text-xs text-gray-500">WhatsApp</span>
+            </button>
+            {/* QR Code */}
+            <button
+              type="button"
+              onClick={() => toast.info("QR Code feature coming soon!")}
+              className="flex flex-col items-center gap-1"
+            >
+              <div className="w-12 h-12 rounded-full bg-[#3b5998] flex items-center justify-center shadow-sm">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="white"
+                  className="w-6 h-6"
+                  role="img"
+                  aria-label="QR Code"
+                >
+                  <title>QR Code</title>
+                  <path d="M3 3h6v6H3V3zm2 2v2h2V5H5zm8-2h6v6h-6V3zm2 2v2h2V5h-2zM3 13h6v6H3v-6zm2 2v2h2v-2H5zm13-2h1v1h-1v-1zm-5 0h1v1h-1v-1zm2 2h1v1h-1v-1zm2 0h1v1h-1v-1zm-4 2h1v1h-1v-1zm2 0h1v1h-1v-1zm2 0h1v1h-1v-1zm0 2h1v1h-1v-1zm-4 0h1v1h-1v-1z" />
+                </svg>
+              </div>
+              <span className="text-xs text-gray-500">QR code</span>
+            </button>
+            {/* Share */}
+            <button
+              type="button"
+              onClick={() => {
+                if (navigator.share) {
+                  navigator
+                    .share({ url: inviteLink, title: "Join WynPay" })
+                    .catch(() => {});
+                } else {
+                  handleCopyLink();
+                }
+              }}
+              className="flex flex-col items-center gap-1"
+            >
+              <div className="w-12 h-12 rounded-full bg-[#e53e3e] flex items-center justify-center shadow-sm">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="white"
+                  className="w-6 h-6"
+                  role="img"
+                  aria-label="Share"
+                >
+                  <title>Share</title>
+                  <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z" />
+                </svg>
+              </div>
+              <span className="text-xs text-gray-500">Share</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Purchase Reward Table */}
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div className="px-4 py-3 flex items-center justify-between border-b border-gray-100">
+            <p className="font-bold text-gray-800 text-base">Purchase Reward</p>
+            <button
+              type="button"
+              className="text-xs text-gray-400 flex items-center gap-0.5"
+            >
+              Detail <ChevronRight size={13} />
+            </button>
+          </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-teal-500 text-white">
+                <th className="py-2.5 px-4 text-center font-semibold">Type</th>
+                <th className="py-2.5 px-4 text-center font-semibold">
+                  Profit‰
+                </th>
+                <th className="py-2.5 px-4 text-center font-semibold">Scale</th>
+                <th className="py-2.5 px-4 text-center font-semibold">DAU</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { type: 1, profit: "3.0", scale: 2, dau: 0 },
+                { type: 2, profit: "2.0", scale: 1, dau: 0 },
+                { type: 3, profit: "1.0", scale: 0, dau: 0 },
+              ].map((row, i) => (
+                <tr
+                  key={row.type}
+                  className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                >
+                  <td className="py-3 px-4 text-center text-gray-700">
+                    {row.type}
+                  </td>
+                  <td className="py-3 px-4 text-center text-gray-700">
+                    {row.profit}
+                  </td>
+                  <td className="py-3 px-4 text-center text-gray-700">
+                    {row.scale}
+                  </td>
+                  <td className="py-3 px-4 text-center text-gray-700">
+                    {row.dau}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Top Up Reward Table */}
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div className="px-4 py-3 flex items-center justify-between border-b border-gray-100">
+            <p className="font-bold text-gray-800 text-base">Top Up Reward</p>
+            <button
+              type="button"
+              className="text-xs text-gray-400 flex items-center gap-0.5"
+            >
+              Detail <ChevronRight size={13} />
+            </button>
+          </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-teal-500 text-white">
+                <th className="py-2.5 px-4 text-center font-semibold">Type</th>
+                <th className="py-2.5 px-4 text-center font-semibold">
+                  Profit‰
+                </th>
+                <th className="py-2.5 px-4 text-center font-semibold">Scale</th>
+                <th className="py-2.5 px-4 text-center font-semibold">DAU</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { type: 1, profit: "3.0", scale: 1, dau: 0 },
+                { type: 2, profit: "2.0", scale: 0, dau: 0 },
+                { type: 3, profit: "1.0", scale: 0, dau: 0 },
+              ].map((row, i) => (
+                <tr
+                  key={row.type}
+                  className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                >
+                  <td className="py-3 px-4 text-center text-gray-700">
+                    {row.type}
+                  </td>
+                  <td className="py-3 px-4 text-center text-gray-700">
+                    {row.profit}
+                  </td>
+                  <td className="py-3 px-4 text-center text-gray-700">
+                    {row.scale}
+                  </td>
+                  <td className="py-3 px-4 text-center text-gray-700">
+                    {row.dau}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 // ─── Mine / Profile Screen ────────────────────────────────────────────────────
 function MineScreen({
   buyAmount,
@@ -2688,10 +3125,15 @@ function MineScreen({
     toast.success("Invite code copied!");
   };
 
-  const menuItems = [
+  const menuItems: {
+    icon: React.ReactNode;
+    label: string;
+    onClick?: () => void;
+  }[] = [
     {
       icon: <Gift size={18} className="text-amber-500" />,
       label: "Newbie Rewards",
+      onClick: () => navigate("newcomer-bonus"),
     },
     {
       icon: <Grid2x2 size={18} className="text-teal-600" />,
@@ -2704,6 +3146,7 @@ function MineScreen({
     {
       icon: <Headphones size={18} className="text-purple-500" />,
       label: "Online Service",
+      onClick: () => window.open("https://t.me/wynpayservice", "_blank"),
     },
     {
       icon: <Lock size={18} className="text-gray-500" />,
@@ -2712,6 +3155,7 @@ function MineScreen({
     {
       icon: <Send size={18} className="text-teal-500" />,
       label: "Official Channel",
+      onClick: () => window.open("https://t.me/wynpayofficls", "_blank"),
     },
     {
       icon: <Users size={18} className="text-amber-600" />,
@@ -2822,6 +3266,7 @@ function MineScreen({
               </p>
               <button
                 type="button"
+                onClick={() => navigate("team-management")}
                 data-ocid="mine.team.button"
                 className="mt-2 text-amber-300 text-xs font-bold flex items-center gap-0.5 hover:text-amber-200 transition-colors"
               >
@@ -2843,6 +3288,7 @@ function MineScreen({
             <div key={item.label}>
               <button
                 type="button"
+                onClick={item.onClick}
                 data-ocid={`mine.menu.item.${idx + 1}`}
                 className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition-colors"
               >
@@ -3095,6 +3541,16 @@ export default function App() {
             key="sell-rp-record"
             navigate={navigate}
             currentBalance={buyAmount + rpCoins}
+          />
+        )}
+        {screen === "team-management" && (
+          <TeamManagementScreen
+            key="team-management"
+            inviteCode={
+              registeredUsers[phone.replace(/\D/g, "")]?.inviteCode ||
+              `WYN${phone.slice(-4)}`
+            }
+            navigate={navigate}
           />
         )}
       </AnimatePresence>

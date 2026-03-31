@@ -1,41 +1,39 @@
 # WynPay
 
 ## Current State
-- Buy RP screen has a list button (TrendingUp icon) that doesn't navigate anywhere
-- Sell RP screen has a "Record" button that opens a bottom-sheet modal for transaction records with a basic empty state
-- Both screens lack dedicated record pages matching the user's reference screenshots
+The app has: Mine/Profile screen with a 'My team' card that has a non-functional 'View earnings' button. Menu items for Online Service and Official Channel exist but have no links. Newbie Reward screen shows progress bars and a claim button but no tutorial instructions. No team-management screen exists.
 
 ## Requested Changes (Diff)
 
 ### Add
-- `BuyRPRecordScreen` — full screen with white header, title "Buy RP record", back arrow, horizontal tab bar with tabs: Unfinished | Bank lock | Locked | Success | Fail (active tab has green underline), and an empty state (clipboard SVG illustration + "There are currently no orders" gray text centered on gray background)
-- `SellRPRecordScreen` — full screen with same layout, title "Sell RP record", tabs: Unknown order | Unfinished | Bank lock | Locked | Success
-  - In the "Unknown order" tab: random sell orders (Rs. 100–2000) appear automatically every 2 minutes
-  - Each order card shows: amount, a countdown timer (2:00 → 0:00), and an Accept button
-  - When the 2-minute timer expires, the order disappears from the list
-  - If user's rpCoins balance < 100, Accept button is disabled and shows "Min. ₹100 balance" tooltip/message
-  - The accepted orders move to "Unfinished" tab
-- "buy-rp-record" and "sell-rp-record" to the Screen union type
-- ClipboardEmptyState inline SVG component matching screenshot (clipboard with paper, small paper plane and cloud, gray/blue tones)
+- New `team-management` Screen type and `TeamManagementScreen` component
+  - Blue gradient card: "Yesterday's Rebates" with Top Up (0.0), Purchase 🔒 (0.0), and a calendar widget showing "Team Members: 3"
+  - White card: "Today's Rebates" with Top Up (0.0), Purchase (0.0), Team Additions (0)
+  - White card: "Invite Link" showing `https://wynpay-wxx.caffeine.xyz/?inviteCode={userInviteCode}` with copy button
+  - White card: "More ways" with clickable icons — Telegram (links to https://t.me/wynpayofficls), Facebook, WhatsApp, QR code, Share
+  - White card: "Purchase Reward" with teal header table (Type, Profit‰, Scale, DAU) — rows: 1/3.0/2/0, 2/2.0/1/0, 3/1.0/0/0
+  - White card: "Top Up Reward" with same teal header table — rows: 1/3.0/1/0, 2/2.0/0/0, 3/1.0/0/0
 
 ### Modify
-- BuyRPScreen: TrendingUp icon button in header should navigate to "buy-rp-record"
-- SellRPScreen: "Record" button should navigate to "sell-rp-record" instead of opening the modal
-- Main App: render BuyRPRecordScreen and SellRPRecordScreen with appropriate props
-- Pass rpCoins to SellRPRecordScreen for balance check
+- Mine screen "View earnings" button — navigate to `team-management` screen
+- Mine screen: pass `inviteCode` to TeamManagementScreen
+- Mine screen Online Service menu item — open Telegram link https://t.me/wynpayservice when clicked
+- Mine screen Official Channel menu item — open Telegram link https://t.me/wynpayofficls when clicked
+- Newbie Reward screen — add two tutorial instruction cards above the progress section:
+  - "1. Task Introduction": card with phone mockup image area + callout text: "You can purchase orders of different levels. After receiving the order, it must be completed within the specified time, otherwise the order will be automatically cancelled."
+  - "3. About the Team": card with phone mockup image area + callout text: "Share the invitation code and invite friends to join your team. After your team members complete the order, you will receive a certain percentage of the rebate."
+- Screen type union — add `"team-management"`
+- Main App render — add `{screen === "team-management" && <TeamManagementScreen .../>}`
 
 ### Remove
-- SellRPScreen's `showRecords` state and the records bottom-sheet modal JSX
+- Nothing removed
 
 ## Implementation Plan
-1. Add "buy-rp-record" | "sell-rp-record" to the Screen type
-2. Create ClipboardEmptyState SVG component (inline, no external file needed)
-3. Create BuyRPRecordScreen: white bg, back button → navigate("buy-rp"), tab bar with green underline indicator, empty state for all tabs
-4. Create SellRPRecordScreen:
-   - Same tab structure as above with 5 tabs
-   - useEffect with setInterval every 120 seconds to generate a new random sell order and add it to state with a createdAt timestamp
-   - Each rendered order uses another interval/useEffect to count down; when remaining time hits 0, filter out from state
-   - Accept button: disabled if rpCoins < 100; on click moves order to acceptedOrders array (shown in Unfinished tab)
-5. Update BuyRPScreen TrendingUp button onClick to call navigate("buy-rp-record")
-6. Update SellRPScreen: remove showRecords state + modal, change Record button onClick to navigate("sell-rp-record")
-7. Update App render: add {screen === "buy-rp-record" && <BuyRPRecordScreen>} and {screen === "sell-rp-record" && <SellRPRecordScreen>} with correct props
+1. Add `"team-management"` to Screen type union
+2. Create `TeamManagementScreen` component with all sections matching reference images (blue rebates card, today's rebates, invite link with https://wynpay-wxx.caffeine.xyz/?inviteCode=X, more ways with Telegram/Facebook/WhatsApp/QRcode/Share icons, Purchase Reward table, Top Up Reward table)
+3. Wire Mine screen "View earnings" button to navigate("team-management")
+4. Pass `inviteCode` prop through to TeamManagementScreen from Mine screen and from main App
+5. Update Online Service menu item click handler to open https://t.me/wynpayservice
+6. Update Official Channel menu item click handler to open https://t.me/wynpayofficls
+7. Update NewcomerBonusScreen to add two instruction tutorial cards (Task Introduction + About the Team)
+8. Add TeamManagementScreen to App render block
