@@ -76,17 +76,17 @@ interface SellTransaction {
 type RegisteredUser = { name: string; password: string; inviteCode?: string };
 type UserStore = Record<string, RegisteredUser>; // phone → user
 
-const _WALLET_COLORS: Record<UpiWalletType, string> = {
+const WALLET_COLORS: Record<UpiWalletType, string> = {
   PhonePe: "#5f259f",
   Paytm: "#00b9f1",
   MobiKwik: "#e40046",
   FreeCharge: "#f26522",
 };
-const WALLET_LOGOS: Record<UpiWalletType, string> = {
-  PhonePe: "/assets/generated/phonepe-logo-transparent.dim_100x100.png",
-  Paytm: "/assets/generated/paytm-logo-transparent.dim_100x100.png",
-  MobiKwik: "/assets/generated/mobikwik-logo-transparent.dim_100x100.png",
-  FreeCharge: "/assets/generated/freecharge-logo-transparent.dim_100x100.png",
+const WALLET_EMOJIS: Record<UpiWalletType, string> = {
+  PhonePe: "📱",
+  Paytm: "💳",
+  MobiKwik: "📲",
+  FreeCharge: "⚡",
 };
 
 const _LEVELS = [
@@ -1969,10 +1969,10 @@ interface RandomSellOrder {
 
 function SellRPRecordScreen({
   navigate,
-  currentBalance,
+  rpCoins,
 }: {
   navigate: (s: Screen) => void;
-  currentBalance: number;
+  rpCoins: number;
 }) {
   const tabs = [
     "Unknown order",
@@ -1982,15 +1982,22 @@ function SellRPRecordScreen({
     "Success",
   ];
   const [activeTab, setActiveTab] = useState(0);
+  const [now, setNow] = useState(Date.now());
   const [randomOrders, setRandomOrders] = useState<RandomSellOrder[]>(() => [
     {
       id: `order-${Date.now()}`,
-      amount: Math.max(100, currentBalance),
+      amount: [100, 200, 300, 500, 1000, 2000][Math.floor(Math.random() * 6)],
       createdAt: Date.now(),
       accepted: false,
     },
   ]);
   const [acceptedOrders, setAcceptedOrders] = useState<RandomSellOrder[]>([]);
+
+  // Tick every second to update countdowns
+  useEffect(() => {
+    const tick = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(tick);
+  }, []);
 
   // Remove expired orders every second
   useEffect(() => {
@@ -2004,25 +2011,36 @@ function SellRPRecordScreen({
 
   // Add a new random order every 2 minutes
   useEffect(() => {
+    const amounts = [100, 200, 300, 500, 1000, 2000];
     const generator = setInterval(() => {
       setRandomOrders((prev) => [
         ...prev,
         {
           id: `order-${Date.now()}`,
-          amount: Math.max(100, currentBalance),
+          amount: amounts[Math.floor(Math.random() * amounts.length)],
           createdAt: Date.now(),
           accepted: false,
         },
       ]);
     }, 120000);
     return () => clearInterval(generator);
-  }, [currentBalance]);
+  }, []);
 
   const handleAccept = (order: RandomSellOrder) => {
-    if (currentBalance < 100) return;
+    if (rpCoins < 100) return;
     setRandomOrders((prev) => prev.filter((o) => o.id !== order.id));
     setAcceptedOrders((prev) => [...prev, { ...order, accepted: true }]);
     toast.success("Order accepted! 🎉");
+  };
+
+  const formatCountdown = (createdAt: number) => {
+    const elapsed = Math.floor((now - createdAt) / 1000);
+    const remaining = Math.max(0, 120 - elapsed);
+    const mm = Math.floor(remaining / 60)
+      .toString()
+      .padStart(2, "0");
+    const ss = (remaining % 60).toString().padStart(2, "0");
+    return `${mm}:${ss}`;
   };
 
   const activeOrders = randomOrders.filter((o) => !o.accepted);
@@ -2081,7 +2099,8 @@ function SellRPRecordScreen({
             <ClipboardEmptyState />
           ) : (
             activeOrders.map((order, idx) => {
-              const canAccept = currentBalance >= 100;
+              const countdown = formatCountdown(order.createdAt);
+              const canAccept = rpCoins >= 100;
               return (
                 <div
                   key={order.id}
@@ -2098,6 +2117,9 @@ function SellRPRecordScreen({
                       </p>
                     </div>
                     <div className="flex flex-col items-end gap-2">
+                      <span className="text-sm font-bold text-orange-500">
+                        {countdown}
+                      </span>
                       <button
                         type="button"
                         data-ocid={`sell_rp_record.accept.button.${idx + 1}`}
@@ -2507,12 +2529,11 @@ function SellRPScreen({
                   data-ocid={`sell_rp.wallet.item.${idx + 1}`}
                   className="bg-white rounded-2xl shadow-sm px-4 py-3 flex items-center gap-3"
                 >
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0">
-                    <img
-                      src={WALLET_LOGOS[wallet.name]}
-                      alt={wallet.name}
-                      className="w-10 h-10 object-cover rounded-xl"
-                    />
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-lg font-bold flex-shrink-0"
+                    style={{ backgroundColor: WALLET_COLORS[wallet.name] }}
+                  >
+                    {WALLET_EMOJIS[wallet.name]}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-gray-800 text-sm">
@@ -2605,12 +2626,11 @@ function SellRPScreen({
                       : "border-gray-200 bg-white"
                   }`}
                 >
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
-                    <img
-                      src={WALLET_LOGOS[wt]}
-                      alt={wt}
-                      className="w-8 h-8 object-cover rounded-lg"
-                    />
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0"
+                    style={{ backgroundColor: WALLET_COLORS[wt] }}
+                  >
+                    {WALLET_EMOJIS[wt]}
                   </div>
                   <span className="text-sm font-bold text-gray-700">{wt}</span>
                 </button>
@@ -2923,7 +2943,7 @@ export default function App() {
   const [buyQuantity, setBuyQuantity] = useState(0);
   const [buyAmount, setBuyAmount] = useState(0);
   const [rpCoins, setRpCoins] = useState(0);
-  const sellAmount = buyAmount + rpCoins;
+  const [sellAmount] = useState(600.0);
   const [totalRevenue] = useState(0);
   const [upiWallets, setUpiWallets] = useState<UpiWallet[]>([]);
   const [sellTransactions, _setSellTransactions] = useState<SellTransaction[]>(
@@ -3094,7 +3114,7 @@ export default function App() {
           <SellRPRecordScreen
             key="sell-rp-record"
             navigate={navigate}
-            currentBalance={buyAmount + rpCoins}
+            rpCoins={rpCoins}
           />
         )}
       </AnimatePresence>
