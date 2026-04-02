@@ -82,7 +82,12 @@ interface SellTransaction {
 }
 
 // ─── User Store Types ────────────────────────────────────────────────────────
-type RegisteredUser = { name: string; password: string; inviteCode?: string };
+type RegisteredUser = {
+  name: string;
+  password: string;
+  inviteCode?: string;
+  referralCode?: string;
+};
 type UserStore = Record<string, RegisteredUser>; // phone → user
 
 const _WALLET_COLORS: Record<UpiWalletType, string> = {
@@ -544,6 +549,7 @@ function SignupScreen({
   saveUser: (phone: string, user: RegisteredUser) => void;
   registeredUsers: UserStore;
 }) {
+  const [referralCode, setReferralCode] = useState("");
   const handleCreate = () => {
     const errs: Record<string, string> = {};
     if (!name.trim()) errs.name = "Please enter your full name";
@@ -560,7 +566,12 @@ function SignupScreen({
       return;
     }
     const newInviteCode = `WYN${Math.random().toString(36).substring(2, 5).toUpperCase()}${normalized.slice(-3)}`;
-    saveUser(normalized, { name, password, inviteCode: newInviteCode });
+    saveUser(normalized, {
+      name,
+      password,
+      inviteCode: newInviteCode,
+      referralCode,
+    });
     setUserName(name);
     navigate("home");
     toast.success(`Welcome to WynPay, ${name}! 🎉`);
@@ -620,6 +631,20 @@ function SignupScreen({
               {errors.phone}
             </p>
           )}
+        </div>
+        <div className="space-y-2">
+          <Label className="text-muted-foreground text-sm font-medium">
+            Invite Code{" "}
+            <span className="text-gray-400 text-xs">(optional)</span>
+          </Label>
+          <Input
+            type="text"
+            placeholder="Enter invite code (optional)"
+            value={referralCode}
+            onChange={(e) => setReferralCode(e.target.value)}
+            className="bg-muted border-border h-12 rounded-xl focus:border-primary"
+            data-ocid="signup.referral.input"
+          />
         </div>
         <PasswordField
           id="signup-password"
@@ -2780,11 +2805,17 @@ function SellRPScreen({
 function TeamManagementScreen({
   inviteCode,
   navigate,
+  userPhone,
+  userRewards,
 }: {
   inviteCode: string;
   navigate: (s: Screen) => void;
+  userPhone?: string;
+  userRewards?: number;
 }) {
   const [linkCopied, setLinkCopied] = useState(false);
+  const [showShareCard, setShowShareCard] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(false);
   const inviteLink = `https://wynpay-wxx.caffeine.xyz/?inviteCode=${inviteCode}`;
 
   const handleCopyLink = () => {
@@ -2958,7 +2989,7 @@ function TeamManagementScreen({
             {/* QR Code */}
             <button
               type="button"
-              onClick={() => toast.info("QR Code feature coming soon!")}
+              onClick={() => setShowQRModal(true)}
               className="flex flex-col items-center gap-1"
             >
               <div className="w-12 h-12 rounded-full bg-[#3b5998] flex items-center justify-center shadow-sm">
@@ -2978,15 +3009,7 @@ function TeamManagementScreen({
             {/* Share */}
             <button
               type="button"
-              onClick={() => {
-                if (navigator.share) {
-                  navigator
-                    .share({ url: inviteLink, title: "Join WynPay" })
-                    .catch(() => {});
-                } else {
-                  handleCopyLink();
-                }
-              }}
+              onClick={() => setShowShareCard(true)}
               className="flex flex-col items-center gap-1"
             >
               <div className="w-12 h-12 rounded-full bg-[#e53e3e] flex items-center justify-center shadow-sm">
@@ -3106,6 +3129,154 @@ function TeamManagementScreen({
           </table>
         </div>
       </div>
+
+      {/* Share Card Modal */}
+      {showShareCard && (
+        <div
+          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+          data-ocid="team.share.modal"
+          onClick={() => setShowShareCard(false)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setShowShareCard(false);
+          }}
+        >
+          <div
+            className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl"
+            role="presentation"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-amber-500 via-yellow-400 to-teal-500 px-6 py-5 text-center">
+              <p className="text-white font-black text-xl tracking-wide">
+                WynPay
+              </p>
+              <p className="text-white/80 text-xs mt-1">My Earnings Card</p>
+            </div>
+
+            {/* Stats */}
+            <div className="px-6 py-5 space-y-4">
+              <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                <span className="text-gray-500 text-sm font-medium">
+                  Total Earnings
+                </span>
+                <span className="text-teal-600 font-black text-lg">
+                  ₹{(userRewards ?? 0).toFixed(2)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                <span className="text-gray-500 text-sm font-medium">
+                  Invite Code
+                </span>
+                <span className="text-amber-600 font-bold text-base tracking-widest">
+                  {inviteCode}
+                </span>
+              </div>
+              <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                <span className="text-gray-500 text-sm font-medium">
+                  Mobile
+                </span>
+                <span className="text-gray-800 font-semibold text-sm">
+                  {userPhone ?? "—"}
+                </span>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="px-6 pb-6 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowShareCard(false)}
+                className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-semibold text-sm"
+                data-ocid="team.share.close_button"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                className="flex-1 py-3 rounded-xl bg-teal-500 text-white font-semibold text-sm"
+                data-ocid="team.share.primary_button"
+                onClick={() => {
+                  if (navigator.share) {
+                    navigator
+                      .share({
+                        title: "Join WynPay",
+                        text: `My WynPay earnings: ₹${(userRewards ?? 0).toFixed(2)}. Use my invite code ${inviteCode} to join!`,
+                        url: inviteLink,
+                      })
+                      .catch(() => {});
+                  } else {
+                    handleCopyLink();
+                    toast.success("Link copied!");
+                  }
+                  setShowShareCard(false);
+                }}
+              >
+                Share Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* QR Code Modal */}
+      {showQRModal && (
+        <div
+          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+          data-ocid="team.qr.modal"
+          onClick={() => setShowQRModal(false)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setShowQRModal(false);
+          }}
+        >
+          <div
+            className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl"
+            role="presentation"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <p className="font-bold text-gray-800 text-lg">My QR Code</p>
+              <button
+                type="button"
+                onClick={() => setShowQRModal(false)}
+                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
+                data-ocid="team.qr.close_button"
+              >
+                <span className="text-gray-500 text-sm font-bold">✕</span>
+              </button>
+            </div>
+
+            {/* QR Code */}
+            <div className="px-6 py-6 flex flex-col items-center gap-4">
+              <div className="p-3 border-2 border-amber-200 rounded-2xl bg-amber-50">
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(inviteLink)}`}
+                  alt="QR Code"
+                  className="w-48 h-48"
+                />
+              </div>
+              <p className="text-gray-500 text-sm text-center">
+                Scan to see my earnings &amp; join WynPay
+              </p>
+              <div className="w-full bg-gray-100 rounded-xl px-3 py-2.5 text-center">
+                <p className="text-xs text-teal-600 break-all font-medium">
+                  {inviteLink}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowQRModal(false)}
+                className="w-full py-3 rounded-xl bg-teal-500 text-white font-semibold text-sm"
+                data-ocid="team.qr.confirm_button"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }
@@ -4234,6 +4405,8 @@ export default function App() {
               `WYN${phone.slice(-4)}`
             }
             navigate={navigate}
+            userPhone={phone}
+            userRewards={buyAmount + rpCoins}
           />
         )}
         {screen === "account-security" && (

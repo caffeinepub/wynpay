@@ -1,31 +1,37 @@
-# WynPay
+# WynPay - Version 30 → 31
 
 ## Current State
-The Mine screen has menu items including Account Security, Common Problem, and Bind Payment App, but they are not linked to any screens. The current balance section shows balance numbers but no transaction/bonus history. The Screen type and routing exist in App.tsx.
+- SignupScreen (lines 515–683) has fields: Full Name, Phone, Password, Confirm Password. No invite code field.
+- TeamManagementScreen (lines 2780–3111) has Share and QR Code buttons but both are stubs/basic. Share uses Web Share API, QR shows a toast "coming soon".
+- No share card/modal showing total earnings, invite code, and mobile number.
+- No functional QR code generation.
 
 ## Requested Changes (Diff)
 
 ### Add
-- **Account Security screen**: User can change login password by verifying their mobile number (OTP-style: enter phone, get code via toast, verify, set new password)
-- **Common Problem screen**: FAQ-style accordion with 3 pre-defined Q&As matching the uploaded image layout (Frequently Asked Questions title, expandable cards with answer text inside gray boxes)
-- **Bind Payment App screen**: Users can add UPI IDs for different payment types (PhonePe, Paytm, MobiKwik, FreeCharge) -- each with its own UPI ID field, similar to how Sell RP wallets are managed
-- **Current Balance detail screen**: When user taps the current balance area on Mine, opens a full transaction history page showing: buy transactions, bonus/reward history, sell transactions -- all in a tabbed list
+- **Optional Invite Code field in Signup**: Below the phone number field (before password), add an optional "Invite Code" text input. Store the entered referral code with the user account on signup. If the invite code doesn't match any existing user's code, just save it as-is (no hard validation).
+- **Share Card in TeamManagementScreen**: When user taps the Share button, instead of directly triggering Web Share API, first show a modal/bottom sheet "Share Card" that displays:
+  - App name / WynPay logo at top
+  - User's total earnings (same value as account profit balance — sum of rewards earned)
+  - User's invite code
+  - User's mobile number
+  - A "Share" action button that triggers the actual Web Share API or clipboard copy
+  - A "Close" button
+- **Functional QR Code in TeamManagementScreen**: When user taps the QR Code button, show a modal with a real QR code image that encodes the invite link (https://wynpay-wxx.caffeine.xyz/?inviteCode=USER_CODE). Below the QR code, show a small label "Scan to see my earnings & join WynPay". Use the `qrcode` npm package or generate QR via a public API URL (https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=URL) as an <img> tag — no library needed.
 
 ### Modify
-- Add new screen types: `"account-security"`, `"common-problem"`, `"bind-payment"`, `"balance-history"`
-- Wire Account Security, Common Problem, Bind Payment App menu items to their new screens
-- Wire the current balance section on Mine to the balance-history screen
-- Pass necessary props (phone, registeredUsers, saveUser, upiWallets, setUpiWallets) through navigate/screen system
+- **SignupScreen handleCreate()**: After generating invite code, also capture and store the optional referral/invite code the user entered.
+- **TeamManagementScreen Share button onClick**: Change to open share card modal instead of immediately calling navigator.share.
+- **TeamManagementScreen QR button onClick**: Change from toast stub to open QR code modal.
 
 ### Remove
-Nothing removed.
+- Toast stub "QR Code feature coming soon!" in QR button onClick.
 
 ## Implementation Plan
-1. Add new screen values to Screen type
-2. Create AccountSecurityScreen component (enter phone → verify OTP code → set new password)
-3. Create CommonProblemScreen component (accordion FAQ list matching image)
-4. Create BindPaymentScreen component (add/view UPI IDs per provider)
-5. Create BalanceHistoryScreen component (tabs: All / Buy / Bonus / Sell with transaction lists)
-6. Wire menu items in MineScreen to navigate to respective screens
-7. Make current balance area clickable to navigate to balance-history
-8. Add screen rendering in main App component with required props
+1. In SignupScreen JSX, add an optional `inviteCodeInput` state and an input field for "Invite Code (optional)" between phone and password fields. Store it when creating account.
+2. In TeamManagementScreen, add state: `showShareCard` (boolean) and `showQRModal` (boolean).
+3. Build ShareCard modal component inline — shows earnings, invite code, mobile number, share button.
+4. Build QRModal inline — uses `<img src={https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=INVITE_LINK}>` to render QR code. Add label text below.
+5. Wire Share button onClick to `setShowShareCard(true)`.
+6. Wire QR button onClick to `setShowQRModal(true)`.
+7. Pass required props (userName, userPhone, inviteCode, totalEarnings/rewards) into TeamManagementScreen or read from existing props.
